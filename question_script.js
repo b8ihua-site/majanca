@@ -46,15 +46,22 @@ function getJSTDate() {
     }).format(new Date()).replace(/\//g, '-');
 }
 
-function incrementSolveCount() {
+// 引数に subjectId (例: 'PCf', 'PCs') を追加
+function incrementSolveCount(subjectId) {
     const today = getJSTDate();
     let records = JSON.parse(localStorage.getItem(RECORD_KEY) || '{}');
-    records[today] = (records[today] || 0) + 1;
+    
+    if (!records[subjectId]) records[subjectId] = {};
+    records[subjectId][today] = (records[subjectId][today] || 0) + 1;
+    
     localStorage.setItem(RECORD_KEY, JSON.stringify(records));
 }
 
 function getWeeklyData() {
-    const records = JSON.parse(localStorage.getItem(RECORD_KEY) || '{}');
+    const allRecords = JSON.parse(localStorage.getItem(RECORD_KEY) || '{}');
+    // PCs のデータだけを抽出
+    const records = allRecords['PCs'] || {}; 
+    
     const today = new Date();
     const sun = new Date(today);
     sun.setDate(today.getDate() - today.getDay());
@@ -96,7 +103,7 @@ function updateHeaderButton(mode) {
         headerBtn.innerText = '科目選択に戻る';
         headerBtn.onclick = (e) => { 
             e.preventDefault();
-            location.href = 'https://b8ihua.com/majanca'; 
+            location.href = '../'; 
         };
     } else {
         headerBtn.innerText = '単元選択に戻る';
@@ -211,10 +218,10 @@ function showStart() {
       <div class="exp">演習する単元を選択</div>
       <select id="unitSelect">
         <option value="">単元を選択</option>
-        <option value="all">★ 全範囲から出題</option>
+        <option value="all">全範囲から出題</option>
         ${data.map((u, i) => `<option value="${i}">${u.unit}</option>`).join('')}
       </select>
-      <div class="exp">出題モード</div>
+      <div class="exp">出題形式</div>
       <div class="segmented-control">
         <input type="radio" name="mode" id="opt-order" value="order" checked>
         <input type="radio" name="mode" id="opt-random" value="random">
@@ -288,8 +295,13 @@ function showQuestion() {
 }
 
 function next() { 
-    if (!hasCountedThisQuestion) { incrementSolveCount(); hasCountedThisQuestion = true; }
-    index++; showQuestion(); 
+    if (!hasCountedThisQuestion) { 
+        // 引数に 'PCs' を渡す！
+        incrementSolveCount('PCs'); 
+        hasCountedThisQuestion = true; 
+    }
+    index++; 
+    showQuestion(); 
 }
 
 function prev() { 
