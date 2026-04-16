@@ -103,7 +103,7 @@ function updateHeaderButton(mode) {
         headerBtn.innerText = '科目選択に戻る';
         headerBtn.onclick = (e) => { 
             e.preventDefault();
-            location.href = '../'; 
+            location.href = 'index.html'; 
         };
     } else {
         headerBtn.innerText = '単元選択に戻る';
