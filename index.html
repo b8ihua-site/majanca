@@ -35,7 +35,7 @@
 </button>
 
 
-<a href="https://b8ihua.com/majanca" style="text-decoration: none;"><div class="site-header">
+<a href="index.html" style="text-decoration: none;"><div class="site-header">
 
   <h1 style="font-family: 'Lexend';
   font-weight: 4000;
@@ -167,13 +167,28 @@ font-family: Questrial;
   margin: 40px 0 12px;
 }
 
+/* subject-row の背景をテーマ変数に、枠線を追加 */
 .subject-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--bg-color); /* 背景色を白/黒に */
+  box-shadow: #333 ;
   border-radius: 15px;
-  margin-bottom: 3px;
-  padding: 14px 14px;
-  color:white;
+  margin-bottom: 12px; /* カード間の隙間 */
+  padding: 16px;
+  color: var(--text-color); /* 文字色をテーマ依存に */
+  transition: background-color 0.3s, border-color 0.3s;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+
+  /* 控えめなシャドウの設定 */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ダークモード時は影をさらに馴染ませる、または少し光らせる */
+body.dark-mode .subject-row {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+
 }
 
 .subject-icon {
@@ -181,7 +196,6 @@ font-family: Questrial;
   height: 44px;
   border-radius: 10px;
   color: #fff; /* アイコン内の文字は白固定でOK */
-  border: white 1.5px solid;
 font-family: 'Lexend';
   font-weight: 4000;
   font-size: 15px;
@@ -209,13 +223,13 @@ font-family: 'Lexend';
 
 .start-btn {
   background: none;
-  border: 1px solid white; /* 変数に変更 */
+  border: 1px solid var(--btn-border);
   border-radius: 999px;
   padding: 6px 20px;
   font-size: 12px;
   font-family: Questrial;
   cursor: pointer;
-  color: white; /* 変数に変更 */
+  color: var(--btn-text);
   transition: background-color 0.3s, color 0.3s; /* スムーズな変化 */
 }
 
@@ -488,11 +502,14 @@ function getWeeklyData(subjectId) {
     return { labels, dataValues };
 }
 
-function renderSubjectChart(subjectId) {
+// 引数に color を追加
+function renderSubjectChart(subjectId, color) {
     const canvas = document.getElementById(`chart-${subjectId}`);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const weeklyData = getWeeklyData(subjectId);
+    
+    const isDark = document.body.classList.contains('dark-mode');
 
     new Chart(ctx, {
         type: 'bar',
@@ -500,8 +517,8 @@ function renderSubjectChart(subjectId) {
             labels: weeklyData.labels,
             datasets: [{
                 data: weeklyData.dataValues,
-                backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                borderRadius: 2
+                backgroundColor: color, // 引数の科目色を使用
+                borderRadius: 4
             }]
         },
         options: {
@@ -509,33 +526,30 @@ function renderSubjectChart(subjectId) {
             maintainAspectRatio: false,
             scales: {
                 y: { 
-                    display: true, // ← ここを true に変更
+                    display: true,
                     beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)', // 薄いガイド線
-                        drawBorder: false
-                    },
-                    ticks: { 
-                        color: 'rgba(255, 255, 255, 0.8)', 
-                        font: { size: 8 },
-                        stepSize: 5, // 5問刻みにする（お好みで調整してください）
-                        precision: 0 // 小数点を表示しない
-                    }
+                    grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                    ticks: { color: isDark ? '#888' : '#666', font: { size: 8 },stepSize: 5, // 5問刻みにする（お好みで調整してください）
+                        precision: 0}
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { 
-                        color: 'rgba(255, 255, 255, 0.8)', 
-                        font: { size: 8 } 
-                    }
+                    ticks: { color: isDark ? '#888' : '#666', font: { size: 8 } }
                 }
             },
-            plugins: { 
-                legend: { display: false } 
-            }
+            plugins: { legend: { display: false } }
         }
     });
 }
+
+// 読み込み時に色を指定して実行（末尾に80を追加して透明度50%に）
+window.addEventListener('load', () => {
+    renderSubjectChart('PCf', '#7856FF80');
+    renderSubjectChart('PAf', '#AC59B480');
+    renderSubjectChart('PAs1', '#8E009B80');
+    renderSubjectChart('PAs2', '#5C006480');
+    renderSubjectChart('PCs', '#5200E080');
+});
 
 // ページ読み込み時に全科目のグラフを描画
 window.addEventListener('load', () => {
@@ -547,10 +561,10 @@ window.addEventListener('load', () => {
 <section class="subject-section">
     <h2 class="section-title">3年前期科目</h2>
 
-    <div class="subject-row" style="background:#7856FF; flex-direction: column; align-items: stretch;">
+    <div class="subject-row">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div style="display: flex; align-items: center;">
-                <div class="subject-icon">PCf</div>
+                <div class="subject-icon" style="background:#7856FF;">PCf</div>
                 <div class="subject-text">
                     <div class="subject-name">薬理学F</div>
                     <div class="subject-count">98問</div>
@@ -563,12 +577,12 @@ window.addEventListener('load', () => {
         </div>
     </div>
 
-    <div class="subject-row" style="background:#AC59B4; flex-direction: column; align-items: stretch;">
+    <div class="subject-row">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div style="display: flex; align-items: center;">
-                <div class="subject-icon">PAf</div>
+                <div class="subject-icon" style="background:#AC59B4;">PAf</div>
                 <div class="subject-text">
-                    <div class="subject-name">病理学F</div> 
+                    <div class="subject-name">病理学F</div>
                     <div class="subject-count">120問</div>
                 </div>
             </div>
@@ -581,10 +595,10 @@ window.addEventListener('load', () => {
 
     <h2 class="section-title">3年後期科目</h2>
 
-    <div class="subject-row" style="background:#8E009B; flex-direction: column; align-items: stretch;">
+    <div class="subject-row">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div style="display: flex; align-items: center;">
-                <div class="subject-icon">PAs1</div>
+                <div class="subject-icon" style="background:#8E009B;">PAs1</div>
                 <div class="subject-text">
                     <div class="subject-name">病理学S1</div>
                     <div class="subject-count">45問</div>
@@ -597,10 +611,10 @@ window.addEventListener('load', () => {
         </div>
     </div>
 
-    <div class="subject-row" style="background:#5C0064; flex-direction: column; align-items: stretch;">
+    <div class="subject-row">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div style="display: flex; align-items: center;">
-                <div class="subject-icon">PAs2</div>
+                <div class="subject-icon" style="background:#5C0064;">PAs2</div>
                 <div class="subject-text">
                     <div class="subject-name">病理学S2</div>
                     <div class="subject-count">52問</div>
@@ -613,10 +627,10 @@ window.addEventListener('load', () => {
         </div>
     </div>
 
-    <div class="subject-row" style="background:#5200E0; flex-direction: column; align-items: stretch;">
+    <div class="subject-row">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div style="display: flex; align-items: center;">
-                <div class="subject-icon">PCs</div>
+                <div class="subject-icon" style="background:#5200E0;">PCs</div>
                 <div class="subject-text">
                     <div class="subject-name">薬理学S</div>
                     <div class="subject-count">158問</div>
