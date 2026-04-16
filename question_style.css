@@ -293,7 +293,7 @@ h2{
 .exp{
   font-size: 16px;
   line-height: 1.7;
-  margin: 18px 0;
+  margin: 10px 0;
 }
 
 .exp2{
@@ -392,16 +392,18 @@ body.dark-mode .mask.revealed{
   gap:12px;
 }
 
-/* --- セグメントコントロール（3択対応） --- */
+/* --- セグメントコントロール（3択完全修正版） --- */
 .segmented-control {
   position: relative;
   width: 100%;
   margin: 10px 0;
-  background: rgba(0,0,0,0.03); /* 背景を少し見やすく */
+  background: rgba(0,0,0,0.03);
   border-radius: 100px;
   padding: 2px;
   display: flex;
   transition: background-color .3s;
+  box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 body.dark-mode .segmented-control {
@@ -425,31 +427,38 @@ body.dark-mode .segmented-control {
   transition: color 0.3s, font-weight 0.3s;
 }
 
-/* 動く背景のロジック（3択用） */
+/* 動く背景のロジック */
 .selection-bg {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: calc(33.33% - 4px);
+  /* ★自分自身ではなく「親の幅」を基準に3等分する */
+  width: calc((100% - 4px) / 3); 
   height: calc(100% - 4px);
   background: var(--bg);
   border: 1px solid var(--btn-border);
   border-radius: 100px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
+
 }
 
-/* 選択された時の文字色と背景の移動 */
-#opt-normal:checked ~ .control-label[for="opt-normal"],
+/* 選択時の文字色 */
+#opt-order:checked ~ .control-label[for="opt-order"],
 #opt-random:checked ~ .control-label[for="opt-random"],
 #opt-flag:checked ~ .control-label[for="opt-flag"] {
   color: var(--text-main);
   font-weight: 600;
 }
 
+/* ★ 移動距離の計算：自分自身の幅(100%)をスライドさせる */
+#opt-order:checked ~ .selection-bg { transform: translateX(0); }
 #opt-random:checked ~ .selection-bg { transform: translateX(100%); }
 #opt-flag:checked ~ .selection-bg { transform: translateX(200%); }
 
+/* ※注意：CSSの後ろの方に別の .selection-bg 定義がある場合は、
+  それらをすべて削除してください。
+*/
 /* --- フラグアイコンのスタイル --- */
 .flag-container {
   display: flex;
@@ -501,22 +510,7 @@ body.dark-mode .btn-start {
 
 /* 既存の primary ボタンと競合しないよう、必要に応じて調整してください */
 
-/* 3択用の背景移動ロジック */
-.selection-bg {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: calc(33.33% - 4px);
-  height: calc(100% - 4px);
-  background: var(--bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 100px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-}
 
-#opt-random:checked ~ .selection-bg { transform: translateX(100%); }
-#opt-flag:checked ~ .selection-bg { transform: translateX(200%); }
 
 /* フラグアイコンのスタイル */
 .flag-icon {
