@@ -71,7 +71,7 @@ function getWeeklyData() {
 }
 
 /* ============================================================
-   3. モチベーションコメント生成
+   3. モチベーションコメント生成 & ヘッダー制御
    ============================================================ */
 function getMotivationMessage(weeklyData) {
     const activeDays = weeklyData.dataValues.filter(count => count > 0).length;
@@ -86,6 +86,25 @@ function getMotivationMessage(weeklyData) {
         7: "👑 素晴らしい！完全制覇！"
     };
     return messages[activeDays] || messages[0];
+}
+
+function updateHeaderButton(mode) {
+    const headerBtn = document.querySelector('.start-btn');
+    if (!headerBtn) return;
+    
+    if (mode === 'top') {
+        headerBtn.innerText = '科目選択に戻る';
+        headerBtn.onclick = (e) => { 
+            e.preventDefault();
+            location.href = 'https://b8ihua.com/majanca'; 
+        };
+    } else {
+        headerBtn.innerText = '単元選択に戻る';
+        headerBtn.onclick = (e) => { 
+            e.preventDefault();
+            showStart(); 
+        };
+    }
 }
 
 /* ============================================================
@@ -130,7 +149,7 @@ function initReveal() {
     let i = 0, ready = false;
     setTimeout(() => { ready = true; }, 0);
     document.onclick = (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('material-symbols-outlined')) return;
+        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('material-symbols-outlined') || e.target.closest('.start-btn')) return;
         if (ready && i < masks.length) { masks[i].classList.add('revealed'); i++; }
     };
 }
@@ -142,7 +161,6 @@ function renderChart(weeklyData) {
     if (window.myChart instanceof Chart) window.myChart.destroy();
 
     const isDark = document.body.classList.contains('dark-mode');
-
     const iconColor = getComputedStyle(document.body).getPropertyValue('--icon-color').trim() || '#0059FF';
 
     window.myChart = new Chart(ctx, {
@@ -184,6 +202,7 @@ async function loadAppData() {
 
 function showStart() {
     clearNav();
+    updateHeaderButton('top'); 
     const weeklyData = getWeeklyData();
     const comment = getMotivationMessage(weeklyData);
 
@@ -205,14 +224,14 @@ function showStart() {
         <label for="opt-flag" class="control-label">フラグ</label>
         <div class="selection-bg"></div>
       </div>
-            <div class="exp">進捗</div>
-            <div id="chart-container">
-
+      <div class="exp">進捗</div>
+      <div id="chart-container">
         <canvas id="solvedChart"></canvas>
-      </div><div class="motivation-comment">${comment}</div>
+      </div>
+      <div class="motivation-comment">${comment}</div>
       <button class="btn-start" onclick="startFromSelect()">開始</button>
-
     </div>`;
+    
     renderChart(weeklyData);
 }
 
@@ -240,21 +259,31 @@ function startFromSelect() {
 
 function showQuestion() {
     hasCountedThisQuestion = false;
+    updateHeaderButton('question'); 
     if (index >= questions.length) return showFinish();
+    
     const q = questions[index];
     const qId = `${q.unitName}_${q.no}`;
     const isF = getFlags().includes(qId);
+    
     app.innerHTML = `
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="sub">${q.unitName} - ${q.no}</div>
+        <div class="sub">${q.no}</div>
         <span class="material-symbols-outlined flag-icon ${isF ? 'active' : ''}" onclick="toggleFlag('${q.unitName}','${q.no}')">flag</span>
       </div>
       <div class="progress">${index + 1} / ${questions.length}</div>
       <h2 style="margin-top:5px;">${q.title}</h2>
       <p style="line-height:21px; font-size:14px;">${maskText(q.answer)}</p>
     </div>`;
-    nav.innerHTML = `<div class="bottom-nav"><button onclick="prev()">戻る</button><button class="primary2" onclick="next()" style="background:var(--btn-hover-bg);color:var(--btn-hover-text);">進む</button></div>`;
+    
+    // ★ 下のボタンを「戻る（一問前）」と「進む（次へ）」に修正
+    nav.innerHTML = `
+    <div class="bottom-nav">
+        <button onclick="prev()">戻る</button>
+        <button class="primary2" onclick="next()" style="background:var(--btn-hover-bg);color:var(--btn-hover-text);">進む</button>
+    </div>`;
+    
     initReveal();
 }
 
@@ -262,7 +291,21 @@ function next() {
     if (!hasCountedThisQuestion) { incrementSolveCount(); hasCountedThisQuestion = true; }
     index++; showQuestion(); 
 }
-function prev() { if (index > 0) { index--; showQuestion(); } }
-function showFinish() { clearNav(); app.innerHTML = `<div class="card" style="text-align:center"><h2>お疲れ様でした</h2><button class="primary" onclick="showStart()">ホームに戻る</button></div>`; }
+
+function prev() { 
+    if (index > 0) { 
+        index--; 
+        showQuestion(); 
+    } 
+}
+
+function showFinish() { 
+    clearNav(); 
+    app.innerHTML = `
+    <div class="card" style="text-align:center">
+        <h2>お疲れ様でした</h2>
+        <button class="primary" onclick="showStart()">単元選択画面へ</button>
+    </div>`; 
+}
 
 window.onload = () => { initTextAnimation(); initTheme(); loadAppData(); };
