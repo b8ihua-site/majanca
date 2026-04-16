@@ -392,71 +392,81 @@ body.dark-mode .mask.revealed{
   gap:12px;
 }
 
-/* セグメントコントロール（文字スイッチ）のスタイル */
+/* --- セグメントコントロール（3択対応） --- */
 .segmented-control {
   position: relative;
   width: 100%;
   margin: 10px 0;
-  background: white;
-
+  background: rgba(0,0,0,0.03); /* 背景を少し見やすく */
   border-radius: 100px;
   padding: 2px;
-    transition: background-color .3s, color .3s;
+  display: flex;
+  transition: background-color .3s;
 }
 
 body.dark-mode .segmented-control {
-  background:#121212;
+  background: rgba(255,255,255,0.1);
 }
 
 .segmented-control input {
-  display: none; /* チェックボックス自体は隠す */
+  display: none;
 }
 
 .control-label {
-  position: relative;
-  display: flex;
-  height: 36px;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.label-text {
   flex: 1;
-  text-align: center;
-  font-size: 13px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
   z-index: 2;
-  transition: color 0.3s;
-  color: var(--text-sub); /* 非選択時は薄い色 */
+  color: var(--text-sub);
+  transition: color 0.3s, font-weight 0.3s;
 }
 
-/* 選択されている方の文字色を強調 */
-#orderToggle:not(:checked) ~ .control-label .left,
-#orderToggle:checked ~ .control-label .right {
+/* 動く背景のロジック（3択用） */
+.selection-bg {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(33.33% - 4px);
+  height: calc(100% - 4px);
+  background: var(--bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 100px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* 選択された時の文字色と背景の移動 */
+#opt-normal:checked ~ .control-label[for="opt-normal"],
+#opt-random:checked ~ .control-label[for="opt-random"],
+#opt-flag:checked ~ .control-label[for="opt-flag"] {
   color: var(--text-main);
   font-weight: 600;
 }
 
-/* 動く背景 */
-.selection-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: var(--bg); /* ボディと同じ背景色 */
-  border-radius: 100px;
-    border: var(--btn-border) 1px solid;
+#opt-random:checked ~ .selection-bg { transform: translateX(100%); }
+#opt-flag:checked ~ .selection-bg { transform: translateX(200%); }
 
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-transition: background-color .3s, color .3s;
+/* --- フラグアイコンのスタイル --- */
+.flag-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -10px;
 }
 
-/* チェック時に右側へスライド */
-#orderToggle:checked ~ .control-label .selection-bg {
-  transform: translateX(100%);
-  
+.flag-btn {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+  color: var(--text-sub);
+}
+
+.flag-btn.active {
+  color: var(--icon-color); /* フラグが立っている時の色（ゴールド） */
+  font-variation-settings: 'FILL' 1; /* アイコンを塗りつぶす */
 }
 
 /* 開始ボタン専用スタイル */
@@ -490,3 +500,72 @@ body.dark-mode .btn-start {
 }
 
 /* 既存の primary ボタンと競合しないよう、必要に応じて調整してください */
+
+/* 3択用の背景移動ロジック */
+.selection-bg {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(33.33% - 4px);
+  height: calc(100% - 4px);
+  background: var(--bg);
+  border: 1px solid var(--btn-border);
+  border-radius: 100px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+#opt-random:checked ~ .selection-bg { transform: translateX(100%); }
+#opt-flag:checked ~ .selection-bg { transform: translateX(200%); }
+
+/* フラグアイコンのスタイル */
+.flag-icon {
+  cursor: pointer;
+  color: var(--text-sub);
+  transition: color 0.2s, font-variation-settings 0.2s;
+  user-select: none;
+  font-size: 28px;
+}
+
+.flag-icon.active {
+  color: var(--icon-color); /* アクティブ時はゴールド */
+  font-variation-settings: 'FILL' 1; /* アイコンを塗りつぶす */
+}
+
+/* ラベルの文字色制御 */
+#opt-order:checked ~ .control-label[for="opt-order"],
+#opt-random:checked ~ .control-label[for="opt-random"],
+#opt-flag:checked ~ .control-label[for="opt-flag"] {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+#chart-container {
+    width: 100%;
+    height: 180px; /* ★高さを明示的に指定 */
+    margin-top: 0px;
+    padding-top: 10px;
+    position: relative; /* ★これが必要 */
+
+}
+
+#solvedChart {
+    position: absolute;
+    top: -10px; /* ラベルの分を下げる */
+    left: 0;
+    width: 100% !important;
+
+}
+
+/* モチベーションコメントのスタイル */
+.motivation-comment {
+    background:rgba(0,0,0,0.03);
+    padding:5px;
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-main);
+    margin-bottom: 0px;
+    text-align: center;
+    min-height: 1.5em; /* コメントがない時も高さを確保してガタつき防止 */
+    opacity: 0.9;
+}
