@@ -1,0 +1,492 @@
+
+/* カラーパレットの定義（CSS変数） */
+:root {
+  --bg-color: #fff;
+  --text-color: #000;
+  --header-text-color: black;
+  --text-item-color: #333;
+  --border-color: rgba(0,0,0,0.1);
+  --btn-border: #000;
+  --btn-text: black;
+  --btn-hover-bg: #000;
+  --btn-hover-text: #fff;
+  --subject-count-opacity: 0.5;
+}
+
+/* ダークモード時の定義 */
+body.dark-mode {
+  --bg-color: #121212; /* 背景色を暗く */
+  --text-color: #e0e0e0; /* 基本文字色を明るく */
+  --header-text-color: #e0e0e0;
+  --text-item-color: #ccc;
+  --border-color: rgba(255,255,255,0.1); /* ボーダーを明るく透明に */
+  --btn-border: #e0e0e0;
+  --btn-text: #e0e0e0;
+  --btn-hover-bg: #e0e0e0;
+  --btn-hover-text: #121212;
+  --subject-count-opacity: 0.7; /* 暗い背景で見やすいように少し不透明度を上げる */
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--bg-color); /* 変数に変更 */
+  color: var(--text-color); /* 変数に変更 */
+  font-family: sans-serif;
+  
+  transition: background-color 0.3s, color 0.3s; /* スムーズな切り替え */
+}
+
+/* 切り替えボタンのスタイル */
+#theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    z-index: 1000;
+    line-height: 26px;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+    /* ボタン自体の色もモードに合わせる場合 */
+    color: var(--text-color);
+}
+
+#theme-toggle:hover {
+    background-color: var(--border-color);
+}
+
+/* モードに応じてアイコンの表示を切り替える */
+body:not(.dark-mode) .icon-moon { display: none; }
+body.dark-mode .icon-sun { display: none; }
+
+/* 既存のスタイルを変数を使って修正 */
+.site-header h1 {
+  margin: 0 0 8px;
+font-family:Zalando Sans Expanded;
+  color: var(--header-text-color); /* 変数に変更 */
+line-height:17px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+ margin: 17px 18px;
+
+}
+
+.site-header p {
+  margin: 0;
+margin-top:0px;
+  font-size: 0.9rem;
+  color: var(--text-color); /* 変数に変更(blackから) */
+font-family: Questrial;
+line-height:15px;
+}
+
+/* #score はHTML内に存在しないため削除しても良いが、念のため残すなら位置を調整 */
+#score {
+  position: fixed;
+  top: 50px; /* ボタンと被らないように少し下げる */
+  right: 16px;
+  font-size:12px;
+font-family: Questrial;
+}
+
+
+.target {
+  display: inline-block;
+  margin: 20px;
+}
+
+.char {
+  display: inline-block;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+
+.section-title {
+  font-family: Questrial;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  margin: 40px 0 12px;
+}
+
+.subject-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 0;
+  
+}
+
+.subject-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  color: #fff; /* アイコン内の文字は白固定でOK */
+font-family: 'Lexend';
+  font-weight: 4000;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+    margin-left: 6px;
+  flex-shrink: 0;
+}
+
+
+.subject-text {
+  flex-grow: 1;
+}
+ 
+.subject-name {
+  font-size: 16px;
+  font-family: Questrial;
+}
+
+.subject-count {
+  font-size: 12px;
+  opacity: var(--subject-count-opacity); /* 変数に変更 */
+}
+
+.start-btn {
+  background: none;
+  border: 1px solid var(--btn-border); /* 変数に変更 */
+  border-radius: 999px;
+  padding: 6px 20px;
+  font-size: 12px;
+  font-family: Questrial;
+  cursor: pointer;
+  color: var(--btn-text); /* 変数に変更 */
+  transition: background-color 0.3s, color 0.3s; /* スムーズな変化 */
+}
+
+.start-btn:hover {
+  background: var(--btn-hover-bg); /* 変数に変更 */
+  color: var(--btn-hover-text); /* 変数に変更 */
+}
+
+        .container {
+            position: relative;
+            padding:20px 18px 0px 18px;
+            height: 50px; 
+            display: flex;
+            
+            overflow: hidden; /* 枠外の文字を隠す */
+        } 
+
+        .text-item {
+            position: absolute;
+            opacity: 0;
+            font-size: 15px;
+            line-height: 0.6;
+            color: var(--text-item-color); /* 変数に変更 */
+            transform: translateY(30px); /* 最初は少し下に配置 */
+            transition: all 0.6s ease; /* アニメーションの速度 */
+            pointer-events: none;
+            width: 100%;
+        }
+
+        /* フェードイン（下から中央へ） */
+        .text-item.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* フェードアウト（中央から上へ） */
+        .text-item.exit {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+
+/* ===============================
+   Color system (reference準拠)
+================================ */
+:root{
+  --bg: #ffffff;
+  --text-main: #000;
+  --text-sub: #555;
+  --border: rgba(0,0,0,0.1);
+  --btn-border: #000;
+  --btn-text: #000;
+  --btn-hover-bg: #000;
+  --btn-hover-text: #fff;
+}
+
+body.dark-mode{
+  --bg: #121212;
+  --text-main: #e0e0e0;
+  --text-sub: #aaa;
+  --border: rgba(255,255,255,0.12);
+  --btn-border: #e0e0e0;
+  --btn-text: #e0e0e0;
+  --btn-hover-bg: #e0e0e0;
+  --btn-hover-text: #121212;
+}
+
+/* ===============================
+   Base
+================================ */
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: Questrial, system-ui, sans-serif;
+  transition: background-color .3s, color .3s;
+}
+
+#app{
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px 18px 120px;
+}
+
+/* ===============================
+   Card → 非カード化
+================================ */
+.card{
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 40px;
+  font-family: sans-serif;
+}
+
+/* セクション間の区切り */
+.card + .card{
+  border-top: 1px solid var(--border);
+  padding-top: 36px;
+}
+
+/* ===============================
+   Typography
+================================ */
+.title-main{
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+
+.title-sub{
+  font-size: 14px;
+  color: var(--text-sub);
+  margin-bottom: 24px;
+}
+
+h2{
+  font-size: 14px;
+  line-height:18px;
+  font-weight: 500;
+  margin: 5px 0 14px;
+  color: var(--text);
+}
+
+.exp{
+  font-size: 16px;
+  line-height: 1.7;
+  margin: 18px 0;
+}
+
+.exp2{
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+
+/* ===============================
+   Progress
+================================ */
+.progress{
+  font-size: 12px;
+  color: var(--text-sub);
+  text-align: right;
+}
+
+/* ===============================
+   Select（フラット）
+================================ */
+select{
+  width:100%;
+  padding: 10px 4px;
+  margin-bottom: 20px;
+
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+
+  font-size: 15px;
+  color: var(--text-main);
+  appearance:none;
+}
+
+/* ===============================
+   Buttons（reference準拠）
+================================ */
+button{
+  font-family: Questrial;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--btn-border);
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-size: 13px;
+  color: var(--btn-text);
+  transition: background-color .3s, color .3s;
+}
+
+
+
+
+
+
+
+/* ===============================
+   Mask
+================================ */
+.mask{
+  background: rgba(0,0,0,0.08);
+  color: transparent;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+body.dark-mode .mask{
+  background: rgba(255,255,255,0.15);
+}
+
+.mask.revealed{
+  background: rgba(0,0,0,0.04);
+  color: var(--text-main);
+  border-radius: 4px;
+}
+
+body.dark-mode .mask.revealed{
+  background: rgba(255,255,255,0.05);
+}
+
+/* ===============================
+   Bottom nav（最小）
+================================ */
+.bottom-nav{
+  position: fixed;
+  left:0;
+  right:0;
+  bottom:0;
+
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+
+  padding: 12px 14px;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+/* セグメントコントロール（文字スイッチ）のスタイル */
+.segmented-control {
+  position: relative;
+  width: 100%;
+  margin: 10px 0;
+  background: white;
+
+  border-radius: 100px;
+  padding: 2px;
+    transition: background-color .3s, color .3s;
+}
+
+body.dark-mode .segmented-control {
+  background:#121212;
+}
+
+.segmented-control input {
+  display: none; /* チェックボックス自体は隠す */
+}
+
+.control-label {
+  position: relative;
+  display: flex;
+  height: 36px;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.label-text {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  z-index: 2;
+  transition: color 0.3s;
+  color: var(--text-sub); /* 非選択時は薄い色 */
+}
+
+/* 選択されている方の文字色を強調 */
+#orderToggle:not(:checked) ~ .control-label .left,
+#orderToggle:checked ~ .control-label .right {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* 動く背景 */
+.selection-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--bg); /* ボディと同じ背景色 */
+  border-radius: 100px;
+    border: var(--btn-border) 1px solid;
+
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+transition: background-color .3s, color .3s;
+}
+
+/* チェック時に右側へスライド */
+#orderToggle:checked ~ .control-label .selection-bg {
+  transform: translateX(100%);
+  
+}
+
+/* 開始ボタン専用スタイル */
+.btn-start {
+  width: 100%;
+  margin-top: 30px;
+  padding: 10px;       /* 押しやすいように少し厚めに */
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border-radius: 100px; /* 少し角丸を抑えたモダンな形状 */
+  border: none;
+  
+  /* 通常時（ライトモード）: 背景黒 / 文字白 */
+  background-color: #000;
+  color: #fff;
+  
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+/* ダークモード時: 背景白 / 文字黒 */
+body.dark-mode .btn-start {
+  background-color: #fff;
+  color: #000;
+}
+
+/* タップ・クリック時のフィードバック */
+.btn-start:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+/* 既存の primary ボタンと競合しないよう、必要に応じて調整してください */
