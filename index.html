@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head><body>
 
@@ -162,7 +162,7 @@ font-family: Questrial;
 
 .section-title {
   font-family: Questrial;
-  font-size: 13px;
+  font-size: 16px;
   letter-spacing: 0.15em;
   margin: 40px 0 12px;
 }
@@ -170,8 +170,10 @@ font-family: Questrial;
 .subject-row {
   display: flex;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border-color); /* 変数に変更 */
+  border-radius: 15px;
+  margin-bottom: 3px;
+  padding: 14px 14px;
+  color:white;
 }
 
 .subject-icon {
@@ -179,6 +181,7 @@ font-family: Questrial;
   height: 44px;
   border-radius: 10px;
   color: #fff; /* アイコン内の文字は白固定でOK */
+  border: white 1.5px solid;
 font-family: 'Lexend';
   font-weight: 4000;
   font-size: 15px;
@@ -206,13 +209,13 @@ font-family: 'Lexend';
 
 .start-btn {
   background: none;
-  border: 1px solid var(--btn-border); /* 変数に変更 */
+  border: 1px solid white; /* 変数に変更 */
   border-radius: 999px;
   padding: 6px 20px;
   font-size: 12px;
   font-family: Questrial;
   cursor: pointer;
-  color: var(--btn-text); /* 変数に変更 */
+  color: white; /* 変数に変更 */
   transition: background-color 0.3s, color 0.3s; /* スムーズな変化 */
 }
 
@@ -460,60 +463,174 @@ body.dark-mode .icon-moon {
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        /* ============================================================
+   共通グラフ描画ロジック
+   ============================================================ */
+const RECORD_KEY = 'majanca_solve_records';
+
+function getWeeklyData(subjectId) {
+    const allRecords = JSON.parse(localStorage.getItem(RECORD_KEY) || '{}');
+    const records = allRecords[subjectId] || {}; // 科目ごとのデータを取得
+    
+    const today = new Date();
+    const sun = new Date(today);
+    sun.setDate(today.getDate() - today.getDay());
+
+    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dataValues = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(sun);
+        d.setDate(sun.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        dataValues.push(records[dateStr] || 0);
+    }
+    return { labels, dataValues };
+}
+
+function renderSubjectChart(subjectId) {
+    const canvas = document.getElementById(`chart-${subjectId}`);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const weeklyData = getWeeklyData(subjectId);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: weeklyData.labels,
+            datasets: [{
+                data: weeklyData.dataValues,
+                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                borderRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    display: true, // ← ここを true に変更
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)', // 薄いガイド線
+                        drawBorder: false
+                    },
+                    ticks: { 
+                        color: 'rgba(255, 255, 255, 0.8)', 
+                        font: { size: 8 },
+                        stepSize: 5, // 5問刻みにする（お好みで調整してください）
+                        precision: 0 // 小数点を表示しない
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: 'rgba(255, 255, 255, 0.8)', 
+                        font: { size: 8 } 
+                    }
+                }
+            },
+            plugins: { 
+                legend: { display: false } 
+            }
+        }
+    });
+}
+
+// ページ読み込み時に全科目のグラフを描画
+window.addEventListener('load', () => {
+    const subjectList = ['PCf', 'PAf', 'PAs1', 'PAs2', 'PCs'];
+    subjectList.forEach(id => renderSubjectChart(id));
+});
     </script>
 
-   <section class="subject-section">
-
+<section class="subject-section">
     <h2 class="section-title">3年前期科目</h2>
 
-    <div class="subject-row">
-      <div class="subject-icon" style="background:#7856FF;">PCf</div>
-      <div class="subject-text">
-        <div class="subject-name">薬理学F</div>
-        <div class="subject-count">98問</div>
-      </div>
-      <button class="start-btn">開始</button>
+    <div class="subject-row" style="background:#7856FF; flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <div class="subject-icon">PCf</div>
+                <div class="subject-text">
+                    <div class="subject-name">薬理学F</div>
+                    <div class="subject-count">98問</div>
+                </div>
+            </div>
+            <a href="PCf.html"><button class="start-btn">開始</button></a>
+        </div>
+        <div style="height: 100px; margin-top: 12px; width: 100%;">
+            <canvas id="chart-PCf"></canvas>
+        </div>
     </div>
 
-    <div class="subject-row">
-      <div class="subject-icon" style="background:#AC59B4;">PAf</div>
-      <div class="subject-text">
-        <div class="subject-name">病理学F</div> 
-        <div class="subject-count">120問</div>
-      </div>
-      <button class="start-btn">開始</button>
+    <div class="subject-row" style="background:#AC59B4; flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <div class="subject-icon">PAf</div>
+                <div class="subject-text">
+                    <div class="subject-name">病理学F</div> 
+                    <div class="subject-count">120問</div>
+                </div>
+            </div>
+            <button class="start-btn">開始</button>
+        </div>
+        <div style="height: 100px; margin-top: 12px; width: 100%;">
+            <canvas id="chart-PAf"></canvas>
+        </div>
     </div>
 
     <h2 class="section-title">3年後期科目</h2>
 
-    <div class="subject-row">
-      <div class="subject-icon" style="background:#8E009B;">PAs1</div>
-      <div class="subject-text">
-        <div class="subject-name">病理学S1</div>
-        <div class="subject-count">45問</div>
-      </div>
-      <button class="start-btn">開始</button>
+    <div class="subject-row" style="background:#8E009B; flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <div class="subject-icon">PAs1</div>
+                <div class="subject-text">
+                    <div class="subject-name">病理学S1</div>
+                    <div class="subject-count">45問</div>
+                </div>
+            </div>
+            <button class="start-btn">開始</button>
+        </div>
+        <div style="height: 100px; margin-top: 12px; width: 100%;">
+            <canvas id="chart-PAs1"></canvas>
+        </div>
     </div>
 
-    <div class="subject-row">
-      <div class="subject-icon" style="background:#5C0064;">PAs2</div>
-      <div class="subject-text">
-        <div class="subject-name">病理学S2</div>
-        <div class="subject-count">52問</div>
-      </div>
-      <button class="start-btn">開始</button>
+    <div class="subject-row" style="background:#5C0064; flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <div class="subject-icon">PAs2</div>
+                <div class="subject-text">
+                    <div class="subject-name">病理学S2</div>
+                    <div class="subject-count">52問</div>
+                </div>
+            </div>
+            <button class="start-btn">開始</button>
+        </div>
+        <div style="height: 100px; margin-top: 12px; width: 100%;">
+            <canvas id="chart-PAs2"></canvas>
+        </div>
     </div>
 
-    <div class="subject-row">
-      <div class="subject-icon" style="background:#5200E0;">PCs</div>
-      <div class="subject-text">
-        <div class="subject-name">薬理学S</div>
-        <div class="subject-count">60問</div>
-      </div>
-     <a href="https://b8ihua.com/majanca/PCs.html"> <button class="start-btn">開始</button></a>
+    <div class="subject-row" style="background:#5200E0; flex-direction: column; align-items: stretch;">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <div class="subject-icon">PCs</div>
+                <div class="subject-text">
+                    <div class="subject-name">薬理学S</div>
+                    <div class="subject-count">158問</div>
+                </div>
+            </div>
+            <a href="PCs.html"><button class="start-btn">開始</button></a>
+        </div>
+        <div style="height: 100px; margin-top: 12px; width: 100%;">
+            <canvas id="chart-PCs"></canvas>
+        </div>
     </div>
+</section>
 
-  </section>
+
 
 <footer class="site-footer">
   <div class="footer-content">
