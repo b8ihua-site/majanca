@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "label": "3年前期科目",
+      "subjects": [
+        { "id": "PCf",  "name": "薬理学F",   "subname": "Pharmacology F",  "color": "#7856FF", "file": "pcf.json"  },
+        { "id": "PAf",  "name": "病理学F",   "subname": "Pathology F",     "color": "#AC59B4", "file": "paf.json"  }
+      ]
+    },
+    {
+      "label": "3年後期科目",
+      "subjects": [
+        { "id": "PAs1", "name": "病理学S1",  "subname": "Pathology S1",    "color": "#8E009B", "file": "pas1.json" },
+        { "id": "PAs2", "name": "病理学S2",  "subname": "Pathology S2",    "color": "#5C0064", "file": "pas2.json" },
+        { "id": "PCs",  "name": "薬理学S",   "subname": "Pharmacology S",  "color": "#5200E0", "file": "pcs.json"  }
+      ]
+    }
+  ]
+}
