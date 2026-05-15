@@ -11,6 +11,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Questrial&family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -117,7 +120,7 @@ button { font-family: inherit; }
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--border);
+  
   padding: env(safe-area-inset-top) 0 0 0;
   transition: background-color 0.3s, border-color 0.3s;
 }
@@ -236,7 +239,7 @@ body.dark-mode .icon-sun { display: none; }
 
 .hero-title {
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 34px;
   line-height: 1.3;
   margin: 0;
@@ -252,11 +255,9 @@ body.dark-mode .icon-sun { display: none; }
   border-radius: 10px;
   white-space: nowrap;
   transition: background-color 0.3s, transform 0.4s var(--ease-spring);
+margin-bottom:7px;
 }
 
-.sticky-note:hover {
-  transform: rotate(-1deg) scale(1.02);
-}
 
 .hero-sub {
   margin: 18px 0 0;
@@ -2453,6 +2454,9 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
   background: linear-gradient(to right, transparent, var(--border), transparent);
   margin: 0;
 }
+
+
+
 </style>
 
 </head>
@@ -2467,7 +2471,7 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
   <div class="topbar-inner">
     <a class="brand" id="brand" href="#/">
       <span class="material-symbols-outlined back-arrow">arrow_back_ios_new</span>
-      <span>majanca</span><span class="brand-dot"></span>
+      <span>majanca</span>
     </a>
     <div class="topbar-actions">
       <button class="icon-btn" id="search-btn" aria-label="検索">
@@ -3093,7 +3097,7 @@ async function renderHome() {
   const footer = el('footer', { className: 'site-footer home-section' });
   footer.innerHTML = `
     <div class="footer-brand">majanca</div>
-    <div class="footer-desc">試験対策支援システム · v2</div>
+    <div class="footer-desc">試験対策支援システム</div>
     <div class="footer-links">
       <a href="#" id="footer-settings">Settings</a>
       <a href="https://b8ihua.com/majanca">Contact</a>
@@ -3134,10 +3138,10 @@ function buildHero() {
   const showRotator = Prefs.get('rotatorEnabled');
 
   hero.innerHTML = `
-    <div class="hero-greeting">${escapeHTML(greet)}<span>·</span> ${escapeHTML(jstDate())}</div>
+    
     <h1 class="hero-title">
-      ${streak >= 1 ? `<span class="sticky-note">${streak}日連続</span>の` : `<span class="sticky-note">隙間時間</span>で`}<br>
-      ${todayCount > 0 ? `今日は<span class="sticky-note">${todayCount}問</span>` : `<span class="sticky-note">効率的</span>な学習`}
+      <span class="sticky-note">隙間時間</span>で<br>
+      <span class="sticky-note">効率的</span>な学習を
     </h1>
     ${showRotator ? `
     <div class="hero-sub" id="hero-rotator">
@@ -3475,14 +3479,14 @@ function buildHeatmap() {
 function getWeekMessage() {
   const days = getActiveDaysThisWeek();
   const total = getWeekly(null).data.reduce((a,b)=>a+b,0);
-  if (total === 0) return '🌱 今週の最初の一歩を踏み出そう';
-  if (days === 1) return '✨ いいスタート';
-  if (days === 2) return '☘️ リズムができてきた';
-  if (days === 3) return '🔥 流れに乗ってる';
-  if (days === 4) return '🚀 素晴らしい習慣';
-  if (days === 5) return '⚡ もはや日常';
-  if (days === 6) return '🌠 ほぼ完璧な一週間';
-  return '👑 今週を完全制覇';
+  if (total === 0) return '🌱 今週の学習は今この瞬間から！';
+  if (days === 1) return '🗿 まずは1日、いいスタート！';
+  if (days === 2) return '☘️ 学習のリズム、できてきた？';
+  if (days === 3) return '🔥 流れきてるよ！';
+  if (days === 4) return '🌠 𝒀𝒐𝒖 𝒂𝒓𝒆 𝒂 𝑺𝒉𝒐𝒐𝒕𝒊𝒏𝒈 𝑺𝒕𝒂𝒓';
+  if (days === 5) return '⚡ 誰にも止められない！';
+  if (days === 6) return '🏆 すごい！すごい！すごい！';
+  return '👑 素晴らしい！完全制覇！';
 }
 
 window.__homeWeeklyChart = null;
@@ -4358,7 +4362,7 @@ function initSettings() {
       <div class="settings-section-title">アプリ情報</div>
       <div class="settings-card" style="padding:16px 18px;font-family:var(--font-ui);font-size:12px;color:var(--text-sub);line-height:1.9;">
         <div style="font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--accent);letter-spacing:-0.04em;margin-bottom:4px;">majanca</div>
-        試験対策支援システム · v2<br>
+        試験対策支援システム<br>
         <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
           <span class="kbd">Space</span> 開示
           <span class="kbd">N</span> 次
