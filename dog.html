@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap" rel="stylesheet">
+<title>DOG GAME | majanca</title>
+<style>
+  :root{
+    --bg:#f7f7f7;
+    --fg:#535353;
+    --ground:#535353;
+    --panel:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--bg);
+    transition:background .25s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:"Jersey 15";
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    max-width:680px;
+    padding:20px;
+  }
+  h1{
+    margin:0;
+    font-size:20px;
+    letter-spacing:2px;
+    color:var(--fg);
+    transition:color .25s ease;
+  }
+  .sub{
+    margin:0;
+    font-size:12px;
+    color:var(--fg);
+    opacity:.7;
+  }
+  canvas{
+    width:100%;
+    max-width:640px;
+    aspect-ratio:640/220;
+    background:var(--bg);
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    border-bottom:2px solid var(--fg);
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .hint{
+    font-size:11px;
+    color:var(--fg);
+    opacity:.6;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1 id="title" style="font-size:40px;">MAJANCA DOG GAME</h1>
+  <canvas id="game" width="640" height="220"></canvas>
+  <p class="hint">SPACE or TAP to JUMP</p>
+</div>
+
+<script>
+/* =====================================================================
+   Sprite frames (reused from hero dog animation)
+===================================================================== */
+const FRAME = {
+  tail1: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACh0lEQVRIDbWWv2tUQRDHdy9HwENI4DSNjUewTJnCP+Aa4eRESTBiYQSbNCGxEa4U7CS1YGUREhACB/4XilaCIlfZBM7iikjgvPV9JzvLzGbfvpdAFo7d+bEzn503u5ztdrvmqkez2cymyFv1VqfFpGST2gplFYRK/PH9G3NtaTkZ8su3H2YwGMD/wiA28zncztamWV1eNPMLN0PiMgh2uNdbw1KBVH2OBm+O5gAQ6SvFT8ND+KgKTqfT7L4UxKUBspkyxhjiHMCTl3ul21F6+WPHVDXYlpplTyQBZrNZap9BIgB0Oh0zmUzMeDwmPw9A67g/ynpDVQJNyAMVYIB2u03JkFAOJByNRgFA2rCuWxG+om7/7U6I4dyMAHAlHz5/RUn4pCI4+SdOHuLUXTBE8AfAxq7uAwDyNS27olz6YnYSLATOLNTnEADhnqMaDIA4vf5j8/f4lwqJh0oM64GEKr9UjeldGcABIB5rLwakGh7tG2vnzOev3/FSQmfReOJN4LeC45moMYNdfo7gHCdmGQCH717T0w2AXn+dTDI4rwsYiscyx/CzOyjirPsDyUpEfiSeqwb3xP0HG+bD3nbY83Rb91EwnC3kAQkAag9hqyBQQi6biguA67dWik/SMK54S2xDtZfy7T96BhkgAQCKLIQooZOnxUYei7fv8rJ0/jc9Idvpn9+UEJ+ABwNAlj3BdjXPt24oubV0R8k5Ya7ZSpolABwqIZJRLqn0ybFb9sjVQ5wc/5TIKjkbaldCnMIMjw5of5SAY9IMf9kDyhgJtSH8PupwTi7BorhK9H7JKsDxohAquBfKgievdjJA2X9MeU0TyThBGQDnquVXpxKpRCkdJ5ZzLb//PBnTtTvcHLkAAAAASUVORK5CYII=',
+  tail2: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACkUlEQVRIDbWWP0ucQRDGd89DyBGIcImNTQ5JmdIiH+CawMFBghIlRSLYpBGTRrgyYCdXB1KlEIWAcJBvkZBUgYhcZSNciisMwnmb9xl3lpl13z8nuHDu7uzsPL+dnX3Rttttc9etXq8XShSv6q1OT5Mzm7SWGMsglPDXz3vm3uJyMuSPX39Mr9eD/8wgtuA63M67t2ZlecHMP3gUhPMg2OF5ZxVDBVJ2HTXeHPUBILKXTr8NjuCjMli2KQVxa4Aysbz1GOIGwMaHft5eg9TLHzvOmg1ZE0mA6XTKsVUPIQC0Wi0zHo/NaDSidQ9AY66PmWoCRcgNGWCAZrNJYhCUDYLD4TAAyDWMOSOTySReUnN+ou5gfycsODclADzJF5u7JMInhZM8rRz7k4c4VQcMEfwBsP5e1wEA+ZnmPVFOfdY7CRYCFwxUYQqA8M6RDQZAnE73lfl3fqpC4kMlmi3ICJ4u/8IWVZjeygAOAHFb3eqRaXB8YKydM99//saXEjaLAhT3z98KiieK0x1++mjWruNcrwkRFhcmPQTAURYAVwKATneNHISA4XEGE4urYB4EoPZGTQhPmxWlygYDwAcAX/rbwf31dp9PTjaG8Q6FB5TXEQLKQRZMBec1ANxfepplpGZc9i2xNVVe7EZ99+Ub9AChqyBj9oevJAkhTuHkaXkz+oXHz+Q0Ob6aXJD98u8ZCeIKuDEA5kXXQf7zjYe8j/rG4hM1L5rM1RvJZQkAh1KIZJRbGr04dqsauXOIi/MTiazEeaEyhDiFGRwf0v5IgGNSD39ZA2oxmlSG8PuowllcgkVx1dT7JbMAx1khVHA/yQuefNrJAHn/Y8pnmhBjgTwA1qrkVyUTKaGUjYVlX8nvP+KM2OVkTnfrAAAAAElFTkSuQmCC',
+  mid:   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACdklEQVRIDbWVPWtUQRSGZ3QRrBSW2C/5Df6EbQIbIkIWY6cQC7uYRlirBNKJrYKtIYGgGPBfGGIVEMz2yjbbpFn2et+T+w5nZudjbyADmzlz5nw858gzu98s73a75rZHs9nMpsjv+q6Vv4yubFRbUJYgvMQnnw/M/Uer0ZBnv34bo9EI9q1BbOY4qp3XL8zj1Ydm/sGjIJwHwQ7PO6sYKpCy66jx5qgPAJG9dPptcAQflcGyTSmIWwOUieWtxxA3ADY+9PP2GqRe/thx1mzImkgCTKdTjq16CAGg1WqZ8XhsRqMRrXsAGnN9zFQTKEJuyAADNJtNEoOgbBAcDocBQK5hzBmZTCbxkprzE3UH+ztywbkqAeBJvtjcJRE+KZzkaeXYnzzEqTpgiOAPgPX3ug4AyM8074ly6rPeSbAQuGCgClMAhHeObDAA4nS6r8y/81MVEh8q0WxBRvB0+Re2qML0VgZwAIjb6laPTIPjA2PtnPn+8ze+lLBZFKC4f/5WUDxRnO7w00ezdh3nek2IsLgw6SEAjrIAuBIAdLprzhECbWHpcN5XBnPfgvIqQkA5yILJ4LwGgPtLT7OM1IzLviW2psqL3ajvvnyDHiB0FWTM/vCVJCHEKZw8LW9Gv/D4mZwmx1eTC7Jf/j0jQVwBNwbAvOg6yH++8ZD3Ud9YfKLmRZO5eiO5LAHgUAqRjHJLoxfHblUjdw5xcX4ikZU4L1SGEKcwg+ND2h8JcEzq4S9rQC1Gk8oQfh91OItLsCiumnq/ZBbgOCuECu4necGTTzsZIO9/TPlME2IskAfAWpX8qmQiJZSysbDsK/n9R5wRu5zM6W4dAAAAAElFTkSuQmCC',
+  stand: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACOUlEQVRIDcVUMUtDMRDO0yI4KRTdi7/Bn9BFqFSEFuumoINbdRHqJriJs+BqoSCKBf+FopMgSHehSxeX8p79Yi7cS3NpWgQDj9y73N335cslSblcVv89CjMSyCLykogYHTINiRzw3c2FWlxd8+K8vH2oVquF+CgiSeRxZM2jPbW+tqwWllYssESCAjYqNZgTicxRQmC2BAIx3qWnbgf+nIK+wEkkZibgA5N8IRJjBHZPrqQ6CtLzjwJj1JB6wksgTVOqnZsBBAKlUkkNBgPV7/f1uiGg7VB/iEqgCWlAASJQLBY1GAD5AGCv17ME+BrskCK+K5q1L5u2RpalmgCu5Pb+qQahnbLiOt6zc1snZPhI2HgQaBzn+wAE6ZpKV5SkH80ZJ2YLO4Z4HIyAvedQgwigTqW6o76/PnMl8VCxkRhCzDVuio1pQolABgLuqB20tKv70FZJMq+eX9/xUsJHeZRCb4Xr1+vScXiDqSJmEOhcn+unGwQq1fpvwUJBDYdDHgo7WE9SghehXShXDeqJza2Gery/tTnsCILglBBFgsDrh2eUl5s5Ab4QS2YqEhwANinh+t1/Q0ZURbwdppC3IV0Q9x+gTIXgQ4VcqTGxNhMBJJqB62n7aeSbWQldDy8lPnfw3dKa8REgZvooZGwOKZGMgGknKES2LmJI6d3GvIpjyMwRIoEw2hFL+XtzUmNyRCij/0kFs2ifZucoeG7QjrmivAA/Eq6S5Oe5oj3pONxEDszXJD+PEe0f2HK9vHt1Xm8AAAAASUVORK5CYII='
+};
+
+/* =====================================================================
+   Setup
+===================================================================== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const W = canvas.width;
+const H = canvas.height;
+const GROUND_H = 36;
+const GROUND_Y = H - GROUND_H;
+
+const SCALE = 2.6;
+const DOG_W = Math.round(33 * SCALE);
+const DOG_H = Math.round(25 * SCALE);
+const DOG_X = W - 56 - DOG_W;
+const STAND_Y = GROUND_Y - DOG_H;
+
+const GRAVITY = 2600;
+const JUMP_VELOCITY = -880;
+
+let imagesLoaded = 0;
+const imgs = {};
+for (const key in FRAME) {
+  const im = new Image();
+  im.src = FRAME[key];
+  im.onload = () => { imagesLoaded++; };
+  imgs[key] = im;
+}
+
+/* =====================================================================
+   Game state
+===================================================================== */
+let state = 'ready'; // ready | playing | gameover
+let dogY = STAND_Y;
+let dogVY = 0;
+let onGround = true;
+
+let runFrameTimer = 0;
+let runFrameToggle = false; // false -> tail1, true -> tail2
+const RUN_FRAME_INTERVAL = 0.13;
+
+let groundOffset = 0;
+let gameSpeed = 320; // px/sec
+let timeAlive = 0;
+const SPEED_ACCEL = 8;   // px/sec gained per second survived — steady, relentless ramp
+const MAX_SPEED = 1000;  // safety ceiling only (avoids obstacles tunnelling through the dog at huge speed); reached after a long, hard run
+
+let score = 0;
+let bestScore = 0;
+let spawnTimer = 1.0;
+let obstacles = [];
+let nightMode = false;
+let lastNightStep = 0;
+
+function resetGame() {
+  state = 'ready';
+  dogY = STAND_Y;
+  dogVY = 0;
+  onGround = true;
+  groundOffset = 0;
+  gameSpeed = 320;
+  timeAlive = 0;
+  score = 0;
+  spawnTimer = 1.0;
+  obstacles = [];
+  nightMode = false;
+  lastNightStep = 0;
+  applyTheme();
+}
+
+function applyTheme() {
+  const root = document.documentElement.style;
+  if (nightMode) {
+    root.setProperty('--bg', '#1d1d1d');
+    root.setProperty('--fg', '#e3e3e3');
+  } else {
+    root.setProperty('--bg', '#f7f7f7');
+    root.setProperty('--fg', '#535353');
+  }
+}
+
+function jump() {
+  if (state === 'ready') {
+    state = 'playing';
+    dogVY = JUMP_VELOCITY;
+    onGround = false;
+  } else if (state === 'playing') {
+    if (onGround) {
+      dogVY = JUMP_VELOCITY;
+      onGround = false;
+    }
+  } else if (state === 'gameover') {
+    resetGame();
+  }
+}
+
+/* =====================================================================
+   Obstacles (simple silhouette shapes, no extra sprites needed)
+===================================================================== */
+function spawnObstacle() {
+  const t = pickObstacleType();
+  obstacles.push({
+    x: -t.w - 10,
+    w: t.w,
+    h: t.h,
+    y: GROUND_Y - t.h,
+    kind: t.kind
+  });
+}
+
+function pickObstacleType() {
+  // harder, taller, doubled obstacles become more common as the score climbs
+  const hardFactor = Math.min(1, score / 2200);
+  const types = [
+    { w: 18, h: 34, kind: 'single', weight: 1 - hardFactor * 0.6 },
+    { w: 30, h: 34, kind: 'twin', weight: 0.5 + hardFactor * 0.9 },
+    { w: 16, h: 48, kind: 'tall', weight: 0.3 + hardFactor * 1.1 }
+  ];
+  const total = types.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of types) {
+    if (r < t.weight) return t;
+    r -= t.weight;
+  }
+  return types[0];
+}
+
+function drawObstacle(o) {
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim();
+  if (o.kind === 'twin') {
+    const half = o.w / 2 - 3;
+    drawSpike(o.x, o.y, half, o.h);
+    drawSpike(o.x + o.w - half, o.y, half, o.h);
+  } else {
+    drawSpike(o.x, o.y, o.w, o.h);
+  }
+}
+
+function drawSpike(x, y, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  ctx.lineTo(x, y + h * 0.35);
+  ctx.lineTo(x + w / 2, y);
+  ctx.lineTo(x + w, y + h * 0.35);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/* =====================================================================
+   Update
+===================================================================== */
+function update(dt) {
+  if (state !== 'playing') return;
+
+  // physics
+  dogVY += GRAVITY * dt;
+  dogY += dogVY * dt;
+  if (dogY >= STAND_Y) {
+    dogY = STAND_Y;
+    dogVY = 0;
+    onGround = true;
+  }
+
+  // run animation (only while grounded)
+  if (onGround) {
+    runFrameTimer += dt;
+    if (runFrameTimer >= RUN_FRAME_INTERVAL) {
+      runFrameTimer = 0;
+      runFrameToggle = !runFrameToggle;
+    }
+  }
+
+  // speed & score — speed is driven by survival time, not score, so there's
+  // no runaway feedback loop; it ramps up steadily and never plateaus early
+  timeAlive += dt;
+  gameSpeed = Math.min(MAX_SPEED, 320 + timeAlive * SPEED_ACCEL);
+  score += dt * (gameSpeed / 12);
+
+  // night mode toggles every 700 pts
+  const step = Math.floor(score / 700);
+  if (step !== lastNightStep) {
+    lastNightStep = step;
+    if (step % 2 === 1) { nightMode = true; } else { nightMode = false; }
+    applyTheme();
+  }
+
+  // ground scroll
+  groundOffset = (groundOffset + gameSpeed * dt) % 24;
+
+  // spawn obstacles
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnObstacle();
+    const gap = Math.max(0.42, 1.6 - gameSpeed / 700);
+    spawnTimer = gap + Math.random() * 0.6;
+  }
+
+  // move obstacles
+  for (const o of obstacles) o.x += gameSpeed * dt;
+  obstacles = obstacles.filter(o => o.x < W + 10);
+
+  // collision
+  const dogBox = {
+    x: DOG_X + 10 * (SCALE / 2.6),
+    y: dogY + 8 * (SCALE / 2.6),
+    w: DOG_W - 22 * (SCALE / 2.6),
+    h: DOG_H - 14 * (SCALE / 2.6)
+  };
+  for (const o of obstacles) {
+    if (
+      dogBox.x < o.x + o.w - 3 &&
+      dogBox.x + dogBox.w > o.x + 3 &&
+      dogBox.y < o.y + o.h &&
+      dogBox.y + dogBox.h > o.y
+    ) {
+      gameOver();
+      break;
+    }
+  }
+}
+
+function gameOver() {
+  state = 'gameover';
+  bestScore = Math.max(bestScore, Math.floor(score));
+}
+
+/* =====================================================================
+   Render
+===================================================================== */
+function render() {
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  const fg = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim();
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ground
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y + 1);
+  ctx.lineTo(W, GROUND_Y + 1);
+  ctx.stroke();
+
+  ctx.fillStyle = fg;
+  for (let x = (groundOffset % 24) - 24; x < W; x += 24) {
+    ctx.fillRect(x, GROUND_Y + 6, 10, 2);
+  }
+
+  // obstacles
+  for (const o of obstacles) drawObstacle(o);
+
+  // dog sprite
+  let frame;
+  if (!onGround) {
+    frame = imgs.stand;
+  } else if (state === 'ready') {
+    frame = imgs.tail1;
+  } else {
+    frame = runFrameToggle ? imgs.tail2 : imgs.tail1;
+  }
+  if (imagesLoaded >= 4) {
+    ctx.drawImage(frame, DOG_X, dogY, DOG_W, DOG_H);
+  }
+
+  // score
+  ctx.fillStyle = fg;
+  ctx.font = '14px "Jersey 15"';
+  ctx.textAlign = 'right';
+  const scoreText = String(Math.floor(score)).padStart(5, '0');
+  ctx.fillText(scoreText, W - 14, 26);
+  if (bestScore > 0) {
+    ctx.globalAlpha = 0.6;
+    ctx.fillText('BEST ' + String(bestScore).padStart(5, '0'), W - 14, 44);
+    ctx.globalAlpha = 1;
+  }
+
+  // overlays
+  ctx.textAlign = 'center';
+  if (state === 'ready') {
+    ctx.font = '13px "Jersey 15"';
+    ctx.fillText('SPACE or TAP to START', W / 2, H / 2 - 10);
+  } else if (state === 'gameover') {
+    ctx.font = 'bold 18px "Jersey 15"';
+    ctx.fillText('GAME OVER', W / 2, H / 2 - 14);
+    ctx.font = '12px "Jersey 15"';
+    ctx.fillText('SPACE or TAP to RETRY', W / 2, H / 2 + 10);
+  }
+}
+
+/* =====================================================================
+   Loop
+===================================================================== */
+let lastTime = 0;
+function loop(t) {
+  const dt = Math.min((t - lastTime) / 1000, 0.05);
+  lastTime = t;
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* =====================================================================
+   Input
+===================================================================== */
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'ArrowUp') {
+    e.preventDefault();
+    jump();
+  }
+});
+canvas.addEventListener('mousedown', jump);
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, { passive: false });
+
+resetGame();
+</script>
+</body>
+</html>
