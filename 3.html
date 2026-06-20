@@ -310,7 +310,7 @@ margin-bottom:7px;
 .hero-dog {
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: -2.8px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   width: 92px;
@@ -2437,7 +2437,7 @@ body.dark-mode .seg-control button.active {
 @media (max-width: 380px) {
   .hero-title { font-size: 28px; }
   .insight-grid { grid-template-columns: 1fr; }
-    .hero-dog { width: 66px; height: 50px; }
+    .hero-dog { width: 66px; height: 50px; bottom: -2px;}
 }
 
 @media (min-width: 720px) {
@@ -3249,21 +3249,24 @@ function buildHero() {
       <div class="hero-main">
         <h1 class="hero-title">
           <span class="sticky-note">隙間時間</span>で<br>
-          <span class="sticky-note">効率的</span>な学習を！
+          <span class="sticky-note">効率的</span>な学習を
         </h1>
         ${showRotator ? `
         <div class="hero-sub" id="hero-rotator">
-          <div class="text-item">📱 スマホで隙間時間に始められる、qAの補助ツール</div>
-          <div class="text-item">📝 試験記述問題をそのまま覚えるトレーニング</div>
-          <div class="text-item">👻 タップで重要語句が段階的に出現</div>
-          <div class="text-item">⭐ フラグを立てた問題で苦手だけ復習</div>
+          <div class="text-item">📱 スマホで隙間時間に始められる、学習支援ツールです</div>
+          <div class="text-item">📝 試験でそのまま出る問題をそのまま覚えましょう</div>
+          <div class="text-item">👻 画面上の任意の場所をタップすることでマスクされた語句が段階的に表示されます</div>
+          <div class="text-item">🤖 機械的な処理でマスクするため、見当違いな箇所でマスクされることがあります</div>
+          <div class="text-item">🚩 問題にフラグを立てて苦手な問題だけ復習できます</div>
         </div>
         ` : ''}
         <button class="hero-cta-btn" id="hero-start-btn" type="button">
           今すぐ始める <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
         </button>
       </div>
-      <img class="hero-dog" id="hero-dog" alt="">
+      <a class="hero-dog-link" href="https://b8ihua.com/majanca/dog.html">
+  <img class="hero-dog" id="hero-dog" alt="">
+</a>
     </div>
   `;
 
@@ -3276,7 +3279,7 @@ if (startBtn) {
 
 initHeroDog(hero.querySelector('#hero-dog'));
 
-  return hero;
+  return hero;　
 }
 
 function buildTodayCard() {
