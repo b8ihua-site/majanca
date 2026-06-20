@@ -66,10 +66,10 @@
 }
 
 body.dark-mode {
-  --bg: #0a0c10;
+  --bg: #121212;
   --bg-warm: #0d0f14;
-  --bg-elev: #14171c;
-  --bg-elev-2: #1c2026;
+  --bg-elev: #2a2a2a;
+  --bg-elev-2: #2a2a2a;
   --text: #ececec;
   --text-sub: #b0b0b0;
   --text-dim: #6a6a6a;
@@ -751,8 +751,8 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   height: 44px;
   border-radius: 12px;
   color: #fff;
-  font-family: var(--font-display);
-  font-weight: 600;
+  font-family: 'Lexend';
+  font-weight: 400;
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -764,11 +764,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 }
 
 .subject-icon::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+  display: none;
 }
 
 .subject-text { flex: 1; min-width: 0; }
@@ -1157,17 +1153,17 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 }
 
 .subject-hero .subject-icon {
-  width: 52px;
-  height: 52px;
+  width: 45px;
+  height: 45px;
   border-radius: 14px;
   font-size: 14px;
 }
 
 .subject-hero h1 {
   font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 24px;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: 0.03em;
   margin: 0;
 }
 
@@ -1181,19 +1177,19 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 
 .field-label {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 14px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-sub);
+  color: var(--text);
   margin: 24px 0 10px;
 }
 
 .unit-select {
   width: 100%;
   padding: 14px 16px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
   font-size: 15px;
   color: var(--text);
   font-family: var(--font-body);
@@ -1240,6 +1236,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   top: 3px; left: 3px;
   height: calc(100% - 6px);
   background: var(--bg);
+  border: var(--text) 1px solid;
   border-radius: 100px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: transform 0.35s var(--ease), width 0.35s var(--ease);
@@ -1247,7 +1244,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 }
 
 body.dark-mode .segmented .seg-bg {
-  background: var(--bg-elev);
+  background: var(--bg);
 }
 
 .segmented input:checked + label { color: var(--text); font-weight: 500; }
@@ -1259,13 +1256,13 @@ body.dark-mode .segmented .seg-bg {
 }
 
 .chip {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1px solid var(--text);
   border-radius: 100px;
   padding: 8px 14px;
   font-size: 12px;
   font-family: var(--font-ui);
-  color: var(--text-sub);
+  color: var(--text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1273,11 +1270,11 @@ body.dark-mode .segmented .seg-bg {
   transition: all 0.2s;
 }
 
-.chip:hover { border-color: var(--border-strong); color: var(--text); }
+.chip:hover { border-color: var(--text); color: var(--text); }
 .chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--text);
+  border-color: 1px solid var(--text);
+  color: var(--bg);
 }
 
 .chip .num {
@@ -1428,7 +1425,7 @@ body.dark-mode .segmented .seg-bg {
 
 .q-title {
   font-size: 15px;
-  line-height: 1.75;
+  line-height: 1.5;
   margin: 8px 0 28px;
   font-weight: 500;
   letter-spacing: 0.005em;
@@ -1436,7 +1433,7 @@ body.dark-mode .segmented .seg-bg {
 
 .q-answer {
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text);
   letter-spacing: 0.005em;
   user-select: none;
@@ -2864,6 +2861,30 @@ function getWeekly(subjectId) {
   return { labels, data };
 }
 
+function getWeeklyBySubject() {
+  const all = LS.get(STORAGE.RECORDS, {});
+  const today = new Date();
+  const sun = new Date(today);
+  sun.setDate(today.getDate() - today.getDay());
+  const labels = ['日','月','火','水','木','金','土'];
+
+  const datasets = [];
+  for (const g of State.manifest.groups) {
+    for (const subj of g.subjects) {
+      const rec = all[subj.id] || {};
+      const data = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(sun);
+        d.setDate(sun.getDate() + i);
+        data.push(rec[jstDate(d)] || 0);
+      }
+      if (data.some(v => v > 0)) datasets.push({ subj, data }); // 今週データがある科目だけ
+    }
+  }
+  return { labels, datasets };
+}
+
+
 function aggregateAllRecords(all) {
   const out = {};
   for (const sid in all) for (const d in all[sid]) out[d] = (out[d] || 0) + all[sid][d];
@@ -3650,9 +3671,11 @@ function renderSubject(subj, units) {
   app.innerHTML = '';
   app.classList.add('view');
 
+    const subjColor = SubjectColors.get(subj.id, subj.color);
+
   const hero = el('section', { className: 'subject-hero view' });
   hero.innerHTML = `
-    <div class="subject-icon" style="background:${subj.color}">${subj.id}</div>
+    <div class="subject-icon" style="background:${subjColor}">${subj.id}</div>
     <div>
       <h1>${escapeHTML(subj.name)}</h1>
       <div class="subname">${escapeHTML(subj.subname || '')}</div>
@@ -3677,21 +3700,21 @@ function renderSubject(subj, units) {
     <div class="field-label">フィルター</div>
     <div class="quick-row" id="filter-chips">
       <div class="chip active" data-filter="none">すべて</div>
-      <div class="chip" data-filter="flag">⭐ フラグ <span class="num">${flagCount}</span></div>
+      <div class="chip" data-filter="flag">フラグ付き <span class="num">${flagCount}</span></div>
       <div class="chip" data-filter="weak">苦手 <span class="num">${weakCount}</span></div>
       <div class="chip" data-filter="unanswered">未学習 <span class="num">${unanswered}</span></div>
     </div>
 
     <div class="field-label">出題順</div>
     <div class="segmented" id="order-seg">
-      <input type="radio" name="order" id="ord-num" value="order" checked>
-      <input type="radio" name="order" id="ord-rand" value="random">
-      <input type="radio" name="order" id="ord-weak" value="weak-first">
-      <label for="ord-num">番号順</label>
-      <label for="ord-rand">ランダム</label>
-      <label for="ord-weak">苦手優先</label>
-      <div class="seg-bg" id="seg-bg"></div>
-    </div>
+  <input type="radio" name="order" id="ord-num" value="order" checked>
+  <label for="ord-num">番号順</label>
+  <input type="radio" name="order" id="ord-rand" value="random">
+  <label for="ord-rand">ランダム</label>
+  <input type="radio" name="order" id="ord-weak" value="weak-first">
+  <label for="ord-weak">苦手のみ</label>
+  <div class="seg-bg" id="seg-bg"></div>
+</div>
 
     <div class="field-label">学習進捗</div>
     <div class="chart-card">
@@ -3743,43 +3766,63 @@ function renderSubject(subj, units) {
   updateMotivation();
 }
 
-function renderWeeklyChart() {
-  const subj = State.currentSubject;
-  if (!subj) return;
-  const canvas = document.getElementById('weekly-chart');
-  if (!canvas) return;
-  const w = getWeekly(subj.id);
-  const totalEl = $('#weekly-total');
-  if (totalEl) totalEl.innerHTML = `${w.data.reduce((a,b)=>a+b,0)}<span class="u">問</span>`;
-  if (typeof Chart === 'undefined') return;
-  if (window.__weekChart) window.__weekChart.destroy();
+window.__homeWeeklyChart = null;
+function renderHomeWeeklyChart() {
+  const canvas = document.getElementById('home-weekly');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (window.__homeWeeklyChart) window.__homeWeeklyChart.destroy();
+
+  const { labels, datasets } = getWeeklyBySubject();
   const isDark = document.body.classList.contains('dark-mode');
 
-  const ctx = canvas.getContext('2d');
-  const grad = ctx.createLinearGradient(0, 0, 0, 160);
-  grad.addColorStop(0, subj.color + 'cc');
-  grad.addColorStop(1, subj.color + '40');
+  const chartDatasets = datasets.map(({ subj, data }) => {
+    const color = SubjectColors.get(subj.id, subj.color);
+    return {
+      label: subj.name,
+      data,
+      backgroundColor: color,
+      hoverBackgroundColor: color,
+      borderRadius: 6,
+      barPercentage: 0.55,
+      stack: 'total'
+    };
+  });
 
-  window.__weekChart = new Chart(ctx, {
+  window.__homeWeeklyChart = new Chart(canvas.getContext('2d'), {
     type: 'bar',
-    data: {
-      labels: w.labels,
-      datasets: [{
-        data: w.data,
-        backgroundColor: grad,
-        hoverBackgroundColor: subj.color,
-        borderRadius: 6,
-        barPercentage: 0.6
-      }]
-    },
+    data: { labels, datasets: chartDatasets },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: { duration: 700 },
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800, easing: 'easeOutCubic' },
+      interaction: { mode: 'index', intersect: false },
       scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1, color: isDark ? '#888' : '#999', font: { size: 10 }, precision: 0 }, grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' } },
-        x: { grid: { display: false }, ticks: { color: isDark ? '#888' : '#999', font: { size: 11 } } }
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: isDark ? '#888' : '#999', font: { size: 10 }, precision: 0 },
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+        },
+        x: {
+          stacked: true,
+          grid: { display: false },
+          ticks: { color: isDark ? '#888' : '#999', font: { size: 11 } }
+        }
       },
-      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1c2026' : '#0a0a0a',
+          titleFont: { family: 'Questrial' },
+          bodyFont: { family: 'Questrial' },
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: true,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}問`
+          }
+        }
+      }
     }
   });
 }
@@ -3846,8 +3889,10 @@ function renderStudy() {
   const qidStr = qid(subj.id, q.unitName, q.no);
   const isFlagged = getFlags(subj.id).includes(qidStr);
   const grade = getGrades(subj.id)[qidStr]?.grade;
+  
+    const subjColor = SubjectColors.get(subj.id, subj.color);
 
-  document.documentElement.style.setProperty('--subject-color', subj.color);
+  document.documentElement.style.setProperty('--subject-color', subjColor);
 
   const app = $('#app');
   app.innerHTML = '';
@@ -3860,7 +3905,7 @@ function renderStudy() {
   card.innerHTML = `
     <div class="study-head">
       <div class="meta">
-        <span class="qno"><span class="dot" style="background:${subj.color}"></span>${escapeHTML(q.no)}</span>
+        <span class="qno"><span class="dot" style="background:${subjColor}"></span>${escapeHTML(q.no)}</span>
         <span class="unit-name">${escapeHTML(q.unitName)}</span>
       </div>
       <div class="actions">
@@ -3877,7 +3922,7 @@ function renderStudy() {
 
     <div class="tap-hint">
       <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
-      画面のどこかをタップで段階表示 ・ <span class="kbd">Space</span> でも可
+      画面をタップまたは<span class="kbd">Space</span>で表示
     </div>
 
     ${q.exp ? `
