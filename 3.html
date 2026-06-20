@@ -32,7 +32,7 @@
   --text: #0a0a0a;
   --text-sub: #5a5a5a;
   --text-dim: #9a9a9a;
-  --border: rgba(10, 10, 10, 0.07);
+  --border: rgba(0, 0, 0, 0.07);
   --border-strong: rgba(10, 10, 10, 0.14);
   --sticky-bg: #f0f0f0;
 
@@ -284,7 +284,7 @@ margin-bottom:7px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 22px;
+  margin-top: 82px;
   padding: 8px 20px;
   background: var(--text);
   color: var(--bg);
@@ -300,6 +300,23 @@ margin-bottom:7px;
 }
 .hero-cta-btn:hover { opacity: 0.85; transform: translateY(-1px); }
 .hero-cta-btn:active { transform: translateY(0); opacity: 0.7; }
+
+.hero-row {
+  position: relative;
+}
+
+.hero-main { width: 100%; }
+
+.hero-dog {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: 92px;
+  height: 70px;
+  animation: fadeUp 0.7s var(--ease) 0.3s both;
+}
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -540,7 +557,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   font-size: 13px;
   color: var(--text);
   background: var(--bg);
-  border: 1.5px solid var(--text);
+  border: 1px solid var(--text);
   border-radius: var(--radius-lg);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -696,7 +713,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   font-size: 13px;
   color: var(--text);
   background: var(--bg);
-  border: 1.5px solid var(--text);
+  border: 1px solid var(--text);
   border-radius: var(--radius-lg);
   padding: 5px 15px;
   letter-spacing: 0.06em;
@@ -837,7 +854,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   font-weight: 600;
   color: var(--text);
   background: var(--bg);
-  border: 1.5px solid var(--text);
+  border: 1px solid var(--text);
   border-radius: var(--radius-lg);
   letter-spacing: 0.02em;
 }
@@ -2420,6 +2437,7 @@ body.dark-mode .seg-control button.active {
 @media (max-width: 380px) {
   .hero-title { font-size: 28px; }
   .insight-grid { grid-template-columns: 1fr; }
+    .hero-dog { width: 66px; height: 50px; }
 }
 
 @media (min-width: 720px) {
@@ -3178,6 +3196,45 @@ async function renderHome() {
   });
 }
 
+/* =====================================================================
+   Hero Dog Animation
+===================================================================== */
+function initHeroDog(img) {
+  if (!img) return;
+  if (window.__heroDogTimer) clearInterval(window.__heroDogTimer);
+
+  const FRAME = {
+    tail1: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACh0lEQVRIDbWWv2tUQRDHdy9HwENI4DSNjUewTJnCP+Aa4eRESTBiYQSbNCGxEa4U7CS1YGUREhACB/4XilaCIlfZBM7iikjgvPV9JzvLzGbfvpdAFo7d+bEzn503u5ztdrvmqkez2cymyFv1VqfFpGST2gplFYRK/PH9G3NtaTkZ8su3H2YwGMD/wiA28zncztamWV1eNPMLN0PiMgh2uNdbw1KBVH2OBm+O5gAQ6SvFT8ND+KgKTqfT7L4UxKUBspkyxhjiHMCTl3ul21F6+WPHVDXYlpplTyQBZrNZap9BIgB0Oh0zmUzMeDwmPw9A67g/ynpDVQJNyAMVYIB2u03JkFAOJByNRgFA2rCuWxG+om7/7U6I4dyMAHAlHz5/RUn4pCI4+SdOHuLUXTBE8AfAxq7uAwDyNS27olz6YnYSLATOLNTnEADhnqMaDIA4vf5j8/f4lwqJh0oM64GEKr9UjeldGcABIB5rLwakGh7tG2vnzOev3/FSQmfReOJN4LeC45moMYNdfo7gHCdmGQCH717T0w2AXn+dTDI4rwsYiscyx/CzOyjirPsDyUpEfiSeqwb3xP0HG+bD3nbY83Rb91EwnC3kAQkAag9hqyBQQi6biguA67dWik/SMK54S2xDtZfy7T96BhkgAQCKLIQooZOnxUYei7fv8rJ0/jc9Idvpn9+UEJ+ABwNAlj3BdjXPt24oubV0R8k5Ya7ZSpolABwqIZJRLqn0ybFb9sjVQ5wc/5TIKjkbaldCnMIMjw5of5SAY9IMf9kDyhgJtSH8PupwTi7BorhK9H7JKsDxohAquBfKgievdjJA2X9MeU0TyThBGQDnquVXpxKpRCkdJ5ZzLb//PBnTtTvcHLkAAAAASUVORK5CYII=',
+    tail2: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACkUlEQVRIDbWWP0ucQRDGd89DyBGIcImNTQ5JmdIiH+CawMFBghIlRSLYpBGTRrgyYCdXB1KlEIWAcJBvkZBUgYhcZSNciisMwnmb9xl3lpl13z8nuHDu7uzsPL+dnX3Rttttc9etXq8XShSv6q1OT5Mzm7SWGMsglPDXz3vm3uJyMuSPX39Mr9eD/8wgtuA63M67t2ZlecHMP3gUhPMg2OF5ZxVDBVJ2HTXeHPUBILKXTr8NjuCjMli2KQVxa4Aysbz1GOIGwMaHft5eg9TLHzvOmg1ZE0mA6XTKsVUPIQC0Wi0zHo/NaDSidQ9AY66PmWoCRcgNGWCAZrNJYhCUDYLD4TAAyDWMOSOTySReUnN+ou5gfycsODclADzJF5u7JMInhZM8rRz7k4c4VQcMEfwBsP5e1wEA+ZnmPVFOfdY7CRYCFwxUYQqA8M6RDQZAnE73lfl3fqpC4kMlmi3ICJ4u/8IWVZjeygAOAHFb3eqRaXB8YKydM99//saXEjaLAhT3z98KiieK0x1++mjWruNcrwkRFhcmPQTAURYAVwKATneNHISA4XEGE4urYB4EoPZGTQhPmxWlygYDwAcAX/rbwf31dp9PTjaG8Q6FB5TXEQLKQRZMBec1ANxfepplpGZc9i2xNVVe7EZ99+Ub9AChqyBj9oevJAkhTuHkaXkz+oXHz+Q0Ob6aXJD98u8ZCeIKuDEA5kXXQf7zjYe8j/rG4hM1L5rM1RvJZQkAh1KIZJRbGr04dqsauXOIi/MTiazEeaEyhDiFGRwf0v5IgGNSD39ZA2oxmlSG8PuowllcgkVx1dT7JbMAx1khVHA/yQuefNrJAHn/Y8pnmhBjgTwA1qrkVyUTKaGUjYVlX8nvP+KM2OVkTnfrAAAAAElFTkSuQmCC',
+    mid:   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACdklEQVRIDbWVPWtUQRSGZ3QRrBSW2C/5Df6EbQIbIkIWY6cQC7uYRlirBNKJrYKtIYGgGPBfGGIVEMz2yjbbpFn2et+T+w5nZudjbyADmzlz5nw898yZie33++a2R6fTyabI7/qulb+MrmxUW1CWILzEJ58PzP1Hq9GQZ79+m9FoBPvWIDZzHNXO6xfm8epDc+/BikucgqDB2mATogdSOo47dA5mBxDoi8sfp8ew8SpYcopB3BiglCy1H0IsADzf/ZDyNSi9/tGwbTV0T0QB5vM5Y3szEgGg1+uZ6XRqJpOJ7DcAIrM/WvUEmpADFSBAt9uVZEioBxKOx2MHoPcgL1sRXtHq8P2Oi1FVcwHAlXz68q0k4Zeq4GIf+XIXZ1mBEM4eAFtv/D4AIK9p6oqy9PVcaTAXOCN4jakA3D1HNQiAOIONZ+bq7x8vJB4qNWwDpFR50WvMxpQAFQDCsbk9EtXpt0Nj7V3z8/wCLyV09KML3wpbakx9HGEQBnMzAI4/7cvTDYDBxlD2kGQ2mzkZQr0O4zkoMVR/dCWUWkRxCqvBnlh/smW+f/3ifHgE6qstwJp1dVTDYwyvK+kBRiH4ZfVMepeMggagTs+ArAeSZQHEKPYPzNF/3IONN1gJTxlZXP27lK/OVYBuuidElwOgU5u5KT9cvCPQMRYg9Cbk4at3ojqKVCW0TayTyWnvvRNQNl1ukbwBQBBZ06k5by4XZhxFm5GrRPYLNIhuUgLEbkEKbKESKcNaL9VA8rrZ5FFA0+GngeDfBgD2uUpgPxxSnTpJeO0MKxA6LLNOvhMFZ/1+8NhiukKY6+22lWBQJuYac0yn95Pyf1kW4OZ+2UDBAAAAAElFTkSuQmCC',
+    stand: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAZCAYAAAC/zUevAAAACXBIWXMAADXUAAA11AFeZeUIAAACOUlEQVRIDcVUMUtDMRDO0yI4KRTdi7/Bn9BFqFSEFuumoINbdRHqJriJs+BqoSCKBf+FopMgSHehSxeX8p79Yi7cS3NpWgQDj9y73N335cslSblcVv89CjMSyCLykogYHTINiRzw3c2FWlxd8+K8vH2oVquF+CgiSeRxZM2jPbW+tqwWllYssESCAjYqNZgTicxRQmC2BAIx3qWnbgf+nIK+wEkkZibgA5N8IRJjBHZPrqQ6CtLzjwJj1JB6wksgTVOqnZsBBAKlUkkNBgPV7/f1uiGg7VB/iEqgCWlAASJQLBY1GAD5AGCv17ME+BrskCK+K5q1L5u2RpalmgCu5Pb+qQahnbLiOt6zc1snZPhI2HgQaBzn+wAE6ZpKV5SkH80ZJ2YLO4Z4HIyAvedQgwigTqW6o76/PnMl8VCxkRhCzDVuio1pQolABgLuqB20tKv70FZJMq+eX9/xUsJHeZRCb4Xr1+vScXiDqSJmEOhcn+unGwQq1fpvwUJBDYdDHgo7WE9SghehXShXDeqJza2Gery/tTnsCILglBBFgsDrh2eUl5s5Ab4QS2YqEhwANinh+t1/Q0ZURbwdppC3IV0Q9x+gTIXgQ4VcqTGxNhMBJJqB62n7aeSbWQldDy8lPnfw3dKa8REgZvooZGwOKZGMgGknKES2LmJI6d3GvIpjyMwRIoEw2hFL+XtzUmNyRCij/0kFs2ifZucoeG7QjrmivAA/Eq6S5Oe5oj3pONxEDszXJD+PEe0f2HK9vHt1Xm8AAAAASUVORK5CYII='
+  };
+  const STEP = 250;
+
+  // 尻尾10往復 → 立ち上がる → 3秒キープ → 座り直す → ループ
+  const sequence = [];
+  for (let i = 0; i < 10; i++) {
+    sequence.push(FRAME.tail1);
+    sequence.push(FRAME.tail2);
+  }
+  sequence.push(FRAME.mid, FRAME.stand);
+  const standHolds = Math.round(3000 / STEP);
+  for (let i = 0; i < standHolds; i++) sequence.push(FRAME.stand);
+  sequence.push(FRAME.mid, FRAME.tail1);
+
+  let idx = 0;
+  function tick() {
+    if (!document.body.contains(img)) {
+      clearInterval(window.__heroDogTimer);
+      return;
+    }
+    img.src = sequence[idx];
+    idx = (idx + 1) % sequence.length;
+  }
+  tick();
+  window.__heroDogTimer = setInterval(tick, STEP);
+}
+
 function buildHero() {
   const hero = el('section', { className: 'hero home-section' });
   const greet = getGreeting();
@@ -3188,24 +3245,26 @@ function buildHero() {
   const showRotator = Prefs.get('rotatorEnabled');
 
   hero.innerHTML = `
-    
-    <h1 class="hero-title">
-      <span class="sticky-note">隙間時間</span>で<br>
-      <span class="sticky-note">効率的</span>な学習を
-    </h1>
-    ${showRotator ? `
-    <div class="hero-sub" id="hero-rotator">
-      <div class="text-item">📱 スマホで隙間時間に始められる、qAの補助ツール</div>
-      <div class="text-item">📝 試験記述問題をそのまま覚えるトレーニング</div>
-      <div class="text-item">👻 タップで重要語句が段階的に出現</div>
-      <div class="text-item">⭐ フラグを立てた問題で苦手だけ復習</div>
+    <div class="hero-row">
+      <div class="hero-main">
+        <h1 class="hero-title">
+          <span class="sticky-note">隙間時間</span>で<br>
+          <span class="sticky-note">効率的</span>な学習を
+        </h1>
+        ${showRotator ? `
+        <div class="hero-sub" id="hero-rotator">
+          <div class="text-item">📱 スマホで隙間時間に始められる、qAの補助ツール</div>
+          <div class="text-item">📝 試験記述問題をそのまま覚えるトレーニング</div>
+          <div class="text-item">👻 タップで重要語句が段階的に出現</div>
+          <div class="text-item">⭐ フラグを立てた問題で苦手だけ復習</div>
+        </div>
+        ` : ''}
+        <button class="hero-cta-btn" id="hero-start-btn" type="button">
+          今すぐ始める <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+        </button>
+      </div>
+      <img class="hero-dog" id="hero-dog" alt="">
     </div>
-    
-    <button class="hero-cta-btn" id="hero-start-btn" type="button">
-  今すぐ始める <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
-</button>
-    ` : ''}
-
   `;
 
   const startBtn = hero.querySelector('#hero-start-btn');
@@ -3214,6 +3273,9 @@ if (startBtn) {
     $('#subjects-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
+
+initHeroDog(hero.querySelector('#hero-dog'));
+
   return hero;
 }
 
