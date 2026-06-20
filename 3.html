@@ -800,6 +800,14 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   gap: 8px;
 }
 
+.subject-subname {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}
+
 .subject-meta {
   font-size: 11px;
   color: var(--text-dim);
@@ -821,10 +829,17 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   font-size: 10px;
 }
 
-.subject-progress-circle {
-  width: 38px;
-  height: 38px;
+.subject-start-btn {
   flex-shrink: 0;
+  padding: 5px 16px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  border: 1.5px solid var(--text);
+  border-radius: var(--radius-lg);
+  letter-spacing: 0.02em;
 }
 
 .subject-progress-bar-wrap {
@@ -3381,18 +3396,14 @@ function buildSubjectCard(subj) {
       <div class="subject-icon" style="background:${subjColor}">${subj.id}</div>
       <div class="subject-text">
         <div class="subject-name">${escapeHTML(subj.name)}</div>
+        <div class="subject-subname">${escapeHTML(subj.subname || '')}</div>
         <div class="subject-meta">
           ${hasData ? `<span>${qCount}問</span>` : `<span>データ未登録</span>`}
           ${rate ? `<span class="pill">正答率 ${rate.rate}%</span>` : ''}
           ${flagCount > 0 ? `<span class="pill" style="color:var(--flag)">⭐ ${flagCount}</span>` : ''}
         </div>
       </div>
-      ${rate ? `
-        <svg class="subject-progress-circle ring" viewBox="0 0 36 36" style="--p:${ringP};--c:${subjColor}">
-          <circle class="bg" cx="18" cy="18" r="15.9155"></circle>
-          <circle class="fg" cx="18" cy="18" r="15.9155" pathLength="100"></circle>
-          <text x="18" y="18">${rate.rate}</text>
-        </svg>` : ''}
+      <div class="subject-start-btn">開 始</div>
     </div>
     ${hasData ? `
       <div class="subject-progress-bar-wrap">
