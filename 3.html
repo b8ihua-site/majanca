@@ -155,6 +155,7 @@ button { font-family: inherit; }
 }
 
 body.in-subject .brand .back-arrow,
+body.in-audio .brand .back-arrow,
 body.in-study .brand .back-arrow {
   width: 22px;
   opacity: 1;
@@ -805,6 +806,46 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 .subject-icon::before {
   display: none;
 }
+
+.subject-icon.outline {
+  background: var(--bg);
+  border-width: 2px;
+  border-style: solid;
+}
+
+.audio-yt-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-elev);
+}
+
+.audio-yt-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.audio-player {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.audio-dl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.audio-dl-link:hover { color: var(--text); }
 
 .subject-text { flex: 1; min-width: 0; }
 
@@ -2519,10 +2560,10 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
 
 <div class="topbar">
   <div class="topbar-inner">
-    <a class="brand" id="brand" href="#/">
-      <span class="material-symbols-outlined back-arrow">arrow_back_ios_new</span>
-      <span>majanca</span>
-    </a>
+<a class="brand" id="brand" href="#/">
+  <span class="material-symbols-outlined back-arrow">arrow_back_ios_new</span>
+  <span id="brand-text">majanca</span>
+</a>
     <div class="topbar-actions">
       <button class="icon-btn" id="search-btn" aria-label="検索">
         <span class="material-symbols-outlined">search</span>
@@ -2717,6 +2758,12 @@ const SUBJECT_SWATCHES = [
   '#84CC16', '#A855F7', '#6366F1', '#0A0A0A'
 ];
 
+// majanca.audio: 科目IDごとの音声データ
+const AUDIO_DATA = {
+  PCf:  { youtubeId: '【要記入：YouTube動画ID】', mp3: '【要記入：mp3ファイルのURL】' },
+  PAs2: { youtubeId: '【要記入：YouTube動画ID】', mp3: '【要記入：mp3ファイルのURL】' }
+};
+
 const State = {
   manifest: null,
   subjectsData: {},
@@ -2829,6 +2876,7 @@ function parseRoute() {
   if (parts.length === 0) return { name: 'home' };
   if (parts[0] === 'subject' && parts[1]) return { name: 'subject', id: parts[1] };
   if (parts[0] === 'study' && parts[1]) return { name: 'study', id: parts[1] };
+  if (parts[0] === 'audio' && parts[1]) return { name: 'audio', id: parts[1] }; 
   return { name: 'home' };
 }
 
@@ -2838,6 +2886,8 @@ async function route() {
   const r = parseRoute();
   document.body.classList.toggle('in-subject', r.name === 'subject');
   document.body.classList.toggle('in-study', r.name === 'study');
+    document.body.classList.toggle('in-audio', r.name === 'audio');
+    $('#brand-text').textContent = r.name === 'audio' ? 'majanca.audio' : 'majanca';
   $('#bottom-nav').classList.remove('visible');
   window.scrollTo({ top: 0, behavior: 'instant' });
 
@@ -2861,6 +2911,14 @@ async function route() {
       return;
     }
     renderStudy();
+    return;
+  }
+
+    if (r.name === 'audio') {                                                 // ← 追加
+    const subj = findSubject(r.id);
+    const audio = AUDIO_DATA[r.id];
+    if (!subj || !audio) { go('/'); return; }
+    renderAudio(subj, audio);
     return;
   }
 }
@@ -3395,8 +3453,11 @@ function buildSubjectsSection() {
       </div>
     `;
     const list = el('div', { className: 'subject-list' });
-    for (const subj of group.subjects) list.appendChild(buildSubjectCard(subj));
-    section.appendChild(list);
+for (const subj of group.subjects) {
+  list.appendChild(buildSubjectCard(subj));
+  if (AUDIO_DATA[subj.id]) list.appendChild(buildAudioCard(subj));
+}
+section.appendChild(list);
     frag.appendChild(section);
   }
   // Need to return as a wrapper since renderHome expects single node
@@ -3482,6 +3543,26 @@ function buildSubjectCard(subj) {
     card.style.opacity = 0.55;
     card.onclick = () => showToast(`${subj.name} はまだデータ未登録です`);
   }
+  return card;
+}
+
+function buildAudioCard(subj) {
+  const subjColor = SubjectColors.get(subj.id, subj.color);
+  const card = el('div', {
+    className: 'subject-card audio-card',
+    style: { '--subject-color': subjColor },
+    onclick: () => go(`/audio/${subj.id}`)
+  });
+  card.innerHTML = `
+    <div class="subject-head">
+      <div class="subject-icon outline" style="color:${subjColor};border-color:${subjColor}">${subj.id}</div>
+      <div class="subject-text">
+        <div class="subject-name">${escapeHTML(subj.name)} - audio</div>
+        <div class="subject-subname">音声で学習</div>
+      </div>
+      <div class="subject-start-btn">開始</div>
+    </div>
+  `;
   return card;
 }
 
@@ -3771,6 +3852,40 @@ function renderSubject(subj, units) {
 
   try { renderWeeklyChart(); } catch (e) { console.warn('chart skipped', e); }
   updateMotivation();
+}
+
+function renderAudio(subj, audio) {
+  const app = $('#app');
+  app.innerHTML = '';
+  app.classList.add('view');
+
+  const subjColor = SubjectColors.get(subj.id, subj.color);
+
+  const hero = el('section', { className: 'subject-hero view' });
+  hero.innerHTML = `
+    <div class="subject-icon outline" style="color:${subjColor};border-color:${subjColor}">${subj.id}</div>
+    <div>
+      <h1>${escapeHTML(subj.name)} - audio</h1>
+      <div class="subname">majanca audio</div>
+    </div>
+  `;
+  app.appendChild(hero);
+
+  const body = el('section', { className: 'view' });
+  body.innerHTML = `
+    <div class="field-label">YouTube</div>
+    <div class="audio-yt-wrap">
+      <iframe src="https://www.youtube.com/embed/${audio.youtubeId}" title="${escapeHTML(subj.name)} audio" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <div class="field-label">MP3</div>
+    <audio class="audio-player" controls src="${audio.mp3}"></audio>
+    <a class="audio-dl-link" href="${audio.mp3}" download>
+      <span class="material-symbols-outlined" style="font-size:16px;">download</span>
+      MP3をダウンロード
+    </a>
+  `;
+  app.appendChild(body);
 }
 
 function updateMotivation() {
