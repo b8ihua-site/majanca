@@ -1427,7 +1427,7 @@ body.dark-mode .segmented .seg-bg {
 }
 
 .q-title {
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.75;
   margin: 8px 0 28px;
   font-weight: 500;
@@ -1435,18 +1435,18 @@ body.dark-mode .segmented .seg-bg {
 }
 
 .q-answer {
-  font-size: 16px;
-  line-height: 2.05;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--text);
   letter-spacing: 0.005em;
   user-select: none;
 }
 
 .mask {
-  background: var(--text);
+  background: #e4e4e6;
   color: transparent;
   border-radius: 4px;
-  padding: 1px 4px;
+  padding: 0px 4px;
   margin: 0 1px;
   transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
   cursor: pointer;
@@ -1455,15 +1455,15 @@ body.dark-mode .segmented .seg-bg {
   display: inline;
 }
 
-body.dark-mode .mask { background: #525a66; }
+body.dark-mode .mask { background: #2a2e36; }
 
 .mask.revealed {
-  background: var(--accent-soft);
+  background: #fdfdfd;
   color: var(--text);
 }
 
 .mask.next-up {
-  background: var(--accent);
+  background: #e4e4e6;
   color: transparent;
   box-shadow: 0 0 0 2px var(--accent-mid);
   animation: pulse 1.6s ease-in-out infinite;
@@ -1536,7 +1536,7 @@ body.dark-mode .mask { background: #525a66; }
   font-size: 14px;
   line-height: 1.95;
   color: var(--text-sub);
-  border-left: 3px solid var(--accent);
+  
 }
 
 .exp-content strong { color: var(--text); }
@@ -3890,9 +3890,19 @@ function renderStudy() {
         <span class="material-symbols-outlined arrow">expand_more</span>
       </button>
       <div class="exp-body" id="exp-body">
-        <div class="exp-content">${escapeHTML(q.exp)}</div>
+        <div class="exp-content">${formatExp(q.exp)}</div>
       </div>
     </div>` : ''}
+
+    <div class="exp-section" style="margin-top:${q.exp ? '10px' : '28px'};">
+      <button class="exp-toggle" id="ask-chatgpt-btn">
+        <span class="left">
+          <span class="material-symbols-outlined" style="font-size:18px;color:var(--accent);">smart_toy</span>
+          ChatGPTに訊く
+        </span>
+        <span class="material-symbols-outlined" style="font-size:18px;opacity:0.5;">open_in_new</span>
+      </button>
+    </div>
 
     <div class="assess-section">
       <div class="assess-label">理解度（次へ進むと記録）</div>
@@ -3928,6 +3938,13 @@ function renderStudy() {
       $('#exp-body').classList.toggle('open');
     });
   }
+
+  $('#ask-chatgpt-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    const promptText = `この${subj.name}の問題を解説してください：${q.title}`;
+    const url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
+    window.open(url, '_blank', 'noopener');
+  });
 
   $$('#assess-row .assess-btn').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -3973,24 +3990,61 @@ function prevQuestion() {
 /* =====================================================================
    Masking - 漢字・カタカナ・英数字をマスク、ひらがなや記号は残す
 ===================================================================== */
-function maskText(text) {
-  // mask: CJK ideographs (漢字), Katakana, Latin, digits, half/full-width
-  // keep open: Hiragana, punctuation/symbols, spaces
-  const MASK_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\u30A0-\u30FF\uFF66-\uFF9FA-Za-z0-9A-Za-z0-9α-ωΑ-Ω]/;
+function renderText(text, doMask) {
+  const MASK_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\u30A0-\u30FF\uFF66-\uFF9FA-Za-z0-9α-ωΑ-Ω]/;
   let out = '';
   let inMask = false;
-  for (const ch of text) {
-    if (MASK_RE.test(ch)) {
+  let atLineStart = true; // 出力の現在位置が行頭かどうか
+  let i = 0;
+
+  const closeMask = () => { if (inMask) { out += '</span>'; inMask = false; } };
+
+  while (i < text.length) {
+    // {{...}} マーカー: 太字＋独立した行にする
+    if (text[i] === '{' && text[i + 1] === '{') {
+      const end = text.indexOf('}}', i + 2);
+      if (end !== -1) {
+        closeMask();
+        const label = text.slice(i + 2, end);
+        if (out.length > 0 && !atLineStart) out += '<br>'; // 前に何かあれば改行してから
+        out += `<strong>${escapeHTML(label)}</strong><br>`; // 太字＋後ろも改行
+        atLineStart = true;
+        i = end + 2;
+        if (text[i] === '\n') i++; // 直後の\nは二重改行になるのでスキップ
+        continue;
+      }
+    }
+
+    const ch = text[i];
+
+    // JSON内の実改行 \n → <br>
+    if (ch === '\n') {
+      closeMask();
+      out += '<br>';
+      atLineStart = true;
+      i++;
+      continue;
+    }
+
+    if (doMask && MASK_RE.test(ch)) {
       if (!inMask) { out += '<span class="mask">'; inMask = true; }
       out += escapeHTML(ch);
     } else {
-      if (inMask) { out += '</span>'; inMask = false; }
+      closeMask();
       out += escapeHTML(ch);
     }
+    atLineStart = false;
+    i++;
   }
-  if (inMask) out += '</span>';
+  closeMask();
   return out;
 }
+
+// answer用（マスクする）
+function maskText(text) { return renderText(text, true); }
+
+// exp用（マスクしない）
+function formatExp(text) { return renderText(text, false); }
 
 let maskClickHandler = null;
 function initMaskReveal() {
