@@ -2515,9 +2515,7 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
 
 <body>
 
-<div class="study-progress-top" id="study-progress" style="display:none;">
-  <div class="fill"></div>
-</div>
+
 
 <div class="topbar">
   <div class="topbar-inner">
@@ -2841,7 +2839,6 @@ async function route() {
   document.body.classList.toggle('in-subject', r.name === 'subject');
   document.body.classList.toggle('in-study', r.name === 'study');
   $('#bottom-nav').classList.remove('visible');
-  $('#study-progress').style.display = r.name === 'study' ? 'block' : 'none';
   window.scrollTo({ top: 0, behavior: 'instant' });
 
   if (r.name === 'home') return renderHome();
@@ -3615,6 +3612,67 @@ window.__rerenderCharts = () => {
 /* =====================================================================
    SUBJECT detail
 ===================================================================== */
+
+window.__subjectWeeklyChart = null;
+function renderWeeklyChart() {
+  const canvas = document.getElementById('weekly-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (window.__subjectWeeklyChart) window.__subjectWeeklyChart.destroy();
+
+  const subj = State.currentSubject;
+  const { labels, data } = getWeekly(subj.id);
+  const total = data.reduce((a, b) => a + b, 0);
+
+  const totalEl = document.getElementById('weekly-total');
+  if (totalEl) totalEl.innerHTML = `${total}<span class="u">問</span>`;
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const color = SubjectColors.get(subj.id, subj.color);
+
+  window.__subjectWeeklyChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: color,
+        hoverBackgroundColor: color,
+        borderRadius: 6,
+        barPercentage: 0.55
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800, easing: 'easeOutCubic' },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: isDark ? '#888' : '#999', font: { size: 10 }, precision: 0 },
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: isDark ? '#888' : '#999', font: { size: 11 } }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#1c2026' : '#0a0a0a',
+          titleFont: { family: 'Questrial' },
+          bodyFont: { family: 'Questrial' },
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: ctx => `${ctx.parsed.y}問`
+          }
+        }
+      }
+    }
+  });
+}
+
 function renderSubject(subj, units) {
   const app = $('#app');
   app.innerHTML = '';
@@ -3786,8 +3844,7 @@ function renderStudy() {
   app.innerHTML = '';
   app.classList.add('view');
 
-  const progress = ((State.index + 1) / State.questions.length) * 100;
-  $('#study-progress .fill').style.width = progress + '%';
+
 
   const card = el('div', { className: 'q-card view' });
   card.innerHTML = `
@@ -3838,7 +3895,7 @@ function renderStudy() {
     </div>
 
     <div class="assess-section">
-      <div class="assess-label">理解度（次へ進むと記録）</div>
+      <div class="assess-label"></div>
       <div class="assess-row" id="assess-row">
         <button class="assess-btn ${grade === 0 ? 'selected' : ''}" data-grade="0">
           <span class="glyph">×</span><span>分からない</span>
@@ -3885,6 +3942,7 @@ function renderStudy() {
       $$('#assess-row .assess-btn').forEach(x => x.classList.remove('selected'));
       btn.classList.add('selected');
       setGrade(subj.id, qidStr, Number(btn.dataset.grade));
+      setTimeout(nextQuestion, 350); 
     });
   });
 
@@ -4012,7 +4070,7 @@ function renderFinish() {
   document.body.classList.remove('in-study');
   document.body.classList.add('in-subject');
   $('#bottom-nav').classList.remove('visible');
-  $('#study-progress').style.display = 'none';
+
 
   const subj = State.currentSubject;
   const total = State.sessionResults.length;
@@ -4714,6 +4772,15 @@ function initShortcuts() {
   });
 }
 
+function initBrandBack() {
+  $('#brand').addEventListener('click', (e) => {
+    if (parseRoute().name === 'study' && State.currentSubject) {
+      e.preventDefault();
+      go(`/subject/${State.currentSubject.id}`);
+    }
+  });
+}
+
 /* =====================================================================
    Boot
 ===================================================================== */
@@ -4725,10 +4792,10 @@ async function boot() {
   initSearch();
   initSettings();
   initShortcuts();
+  initBrandBack();   // ← この行を追加
   window.addEventListener('hashchange', route);
   await route();
 }
-
 window.go = go;
 boot();
 </script>
