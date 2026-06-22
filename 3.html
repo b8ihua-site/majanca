@@ -25,6 +25,8 @@
   --accent-mid: rgba(0, 89, 255, 0.18);
   --accent-strong: rgba(0, 89, 255, 0.35);
 
+  --font-size-base: 15px;
+
   --bg: #ffffff;
   --bg-warm: #fafafa;
   --bg-elev: #f7f7f8;
@@ -459,9 +461,18 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   display: block;
 }
 
+.section-subtitle {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
 .section-title {
   font-family: var(--font-body);
-  font-weight: 700;
+  font-weight: 300;
   font-size: 22px;
   letter-spacing: -0.02em;
   margin: 0;
@@ -762,22 +773,14 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
   overflow: hidden;
 }
 
-.subject-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--subject-color, var(--accent));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
+
 
 .subject-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow);
 }
 
-.subject-card:hover::before { opacity: 1; }
+
 .subject-card:active { transform: scale(0.992); }
 
 .subject-head {
@@ -952,7 +955,7 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 
 .chart-card .chart-total {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 300;
   font-size: 22px;
   letter-spacing: -0.03em;
 }
@@ -978,9 +981,8 @@ body.dark-mode .heatmap-cell[data-lvl="4"] { background: rgba(91,140,255,0.95); 
 }
 
 .chart-message {
-  margin-top: 14px;
+  margin-top: 10px;margin-bottom: 10px;
   padding-top: 14px;
-  border-top: 1px solid var(--border);
   font-family: var(--font-ui);
   font-size: 12.5px;
   color: var(--text-sub);
@@ -1487,7 +1489,7 @@ body.dark-mode .segmented .seg-bg {
 
 .flag-icon:hover { background: var(--bg-elev-2); }
 .flag-icon.active {
-  color: var(--flag);
+  color: var(--accent);
   font-variation-settings: 'FILL' 1;
   animation: flagPop 0.4s var(--ease-spring);
 }
@@ -1519,7 +1521,7 @@ body.dark-mode .segmented .seg-bg {
 }
 
 .q-title {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 1.5;
   margin: 8px 0 28px;
   font-weight: 500;
@@ -1527,7 +1529,7 @@ body.dark-mode .segmented .seg-bg {
 }
 
 .q-answer {
-  font-size: 15px;
+  font-size: var(--font-size-base);
   line-height: 1.5;
   color: var(--text);
   letter-spacing: 0.005em;
@@ -2439,8 +2441,9 @@ body.dark-mode .seg-control button.active {
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: var(--text);
-  color: var(--bg);
+  background: var(--bg);
+  color: var(--text);
+  border: 1.5px solid var(--text);
   padding: 11px 20px;
   border-radius: 100px;
   font-size: 13px;
@@ -2702,8 +2705,8 @@ const Prefs = {
     document.documentElement.style.setProperty('--accent-mid', hexAlpha(a, 0.20));
     document.documentElement.style.setProperty('--accent-strong', hexAlpha(a, 0.35));
     // Font size
-    const sizes = { '-1': 14, '0': 15, '1': 17 };
-    document.documentElement.style.fontSize = sizes[String(this.data.fontSize)] + 'px';
+    const sizes = { '-1': '13px', '0': '15px', '1': '17px' };
+document.documentElement.style.setProperty('--font-size-base', sizes[String(this.data.fontSize)]);
     // Theme handled separately
     // Reduced motion
     document.body.classList.toggle('no-anim', !this.data.animEnabled);
@@ -3346,6 +3349,7 @@ function buildTodayCard() {
       <div>
         
         <h2 class="section-title">今日の一問</h2>
+        <div class="section-subtitle">Daily Pick</div>
       </div>
     </div>
   `;
@@ -3364,7 +3368,7 @@ function buildTodayCard() {
   });
   const subjColor = SubjectColors.get(todayQ.subj.id, todayQ.subj.color);
   tcard.innerHTML = `
-    <div class="badge"><span class="material-symbols-outlined">auto_awesome</span>本日のおすすめ</div>
+    
     <div class="q-subject"><span class="dot" style="background:${subjColor}"></span>${escapeHTML(todayQ.subj.name)} · ${escapeHTML(todayQ.unitName)} · ${escapeHTML(todayQ.q.no)}</div>
     <p class="q-preview">${escapeHTML(todayQ.q.title)}</p>
     <div class="q-action">挑戦する<span class="material-symbols-outlined">arrow_forward</span></div>
@@ -3382,11 +3386,12 @@ function buildWeeklyChart() {
       <div>
         
         <h2 class="section-title">今週の進捗</h2>
+        <div class="section-subtitle">Weekly Activity</div>
       </div>
     </div>
     <div class="chart-card">
       <div class="chart-head">
-        <div class="chart-title">日別演習数</div>
+        <div class="chart-title">全科目の進捗</div>
         <div class="chart-total">${wkTotal}<span class="u">問</span></div>
       </div>
       <div class="chart-sub">${getActiveDaysThisWeek()} 日学習 · 週平均 ${Math.round(wkTotal/7*10)/10} 問/日</div>
@@ -3405,6 +3410,7 @@ function buildWeakLane() {
       <div>
         
         <h2 class="section-title">復習</h2>
+        <div class="section-subtitle">Review</div>
       </div>
       <span class="section-action">${weakList.length > 0 ? `${weakList.length}件 ›` : ''}</span>
     </div>
@@ -3414,7 +3420,7 @@ function buildWeakLane() {
       <div class="lane-empty">
         <span class="material-symbols-outlined">spa</span>
         まだ苦手は記録されていません<br>
-        <span style="opacity:0.6;font-size:11px;">演習で × または △ を選ぶとここに集まります</span>
+        <span style="opacity:0.6;font-size:11px;">演習で × または △ を選ぶとここに表示されます</span>
       </div>
     `);
   } else {
@@ -3521,16 +3527,16 @@ function buildSubjectCard(subj) {
         <div class="subject-name">${escapeHTML(subj.name)}</div>
         <div class="subject-subname">${escapeHTML(subj.subname || '')}</div>
         <div class="subject-meta">
-          ${hasData ? `<span>${qCount}問</span>` : `<span>データ未登録</span>`}
+          ${hasData ? `<span>${qCount}問</span>` : `<span>データが登録されていません</span>`}
           ${rate ? `<span class="pill">正答率 ${rate.rate}%</span>` : ''}
-          ${flagCount > 0 ? `<span class="pill" style="color:var(--flag)">⭐ ${flagCount}</span>` : ''}
+          ${flagCount > 0 ? `<span class="pill" style="color:var(--text-dim)"><span class="material-symbols-outlined" style="font-size:11px;font-variation-settings:'FILL' 1;vertical-align:middle;">flag</span> ${flagCount}</span>` : ''}
         </div>
       </div>
       <div class="subject-start-btn">開 始</div>
     </div>
     ${hasData ? `
       <div class="subject-progress-bar-wrap">
-        <div class="subject-progress-bar" data-target="${progressPct.toFixed(1)}" style="width:0;"></div>
+        <div class="subject-progress-bar" data-target="${progressPct.toFixed(1)}" style="width:0; background:${subjColor};"></div>
       </div>
       <div class="subject-progress-meta">
         <span>${rate?.graded || 0} / ${qCount} 問 学習済</span>
@@ -3807,7 +3813,7 @@ function renderSubject(subj, units) {
     <div class="field-label">学習進捗</div>
     <div class="chart-card">
       <div class="chart-head">
-        <div class="chart-title">今週の演習量</div>
+        <div class="chart-title">今週の進捗</div>
         <div class="chart-total" id="weekly-total">0<span class="u">問</span></div>
       </div>
       <div class="chart-area"><canvas id="weekly-chart"></canvas></div>
@@ -4033,7 +4039,7 @@ function renderStudy() {
     e.stopPropagation();
     const now = toggleFlag(subj.id, qidStr);
     e.target.classList.toggle('active', now);
-    showToast(now ? '⭐ フラグを付けました' : 'フラグを外しました');
+    showToast(now ? 'フラグを付けました' : 'フラグを外しました');
   });
 
   if (q.exp) {
@@ -4046,7 +4052,7 @@ function renderStudy() {
 
   $('#ask-chatgpt-btn').addEventListener('click', e => {
     e.stopPropagation();
-    const promptText = `この${subj.name}の問題を解説してください：${q.title}`;
+    const promptText = `この${subj.name}の問題を解説してください：\n${q.title}`;
     const url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
     window.open(url, '_blank', 'noopener');
   });
@@ -4374,7 +4380,7 @@ function initSettings() {
     // Theme row
     const isDark = document.body.classList.contains('dark-mode');
     const themeMode = LS.get(STORAGE.THEME, null) || 'auto';
-    appCard.appendChild(rowWithControl('palette', 'テーマ', '画面の色合いを切り替え', `
+    appCard.appendChild(rowWithControl('palette', 'テーマ', '画面の色合い', `
       <div class="seg-control" id="theme-seg">
         <button data-mode="light" class="${themeMode === 'light' ? 'active' : ''}">明るい</button>
         <button data-mode="dark" class="${themeMode === 'dark' ? 'active' : ''}">暗い</button>
@@ -4382,7 +4388,15 @@ function initSettings() {
       </div>
     `));
 
-    // Accent color presets
+// Accent color presets
+    const subjColors = [];
+    for (const g of State.manifest.groups)
+      for (const s of g.subjects) {
+        const c = SubjectColors.get(s.id, s.color);
+        if (!subjColors.includes(c)) subjColors.push(c);
+      }
+    const allAccentColors = [...new Set([...ACCENT_PRESETS, ...subjColors])];
+
     const accentRow = el('div', { className: 'settings-row' });
     accentRow.style.flexDirection = 'column';
     accentRow.style.alignItems = 'stretch';
@@ -4392,11 +4406,17 @@ function initSettings() {
         <div class="ic"><span class="material-symbols-outlined">colorize</span></div>
         <div class="info">
           <div class="row-title">アクセントカラー</div>
-          <div class="row-sub">アプリ全体の強調色</div>
+          <div class="row-sub">好きな色は？</div>
         </div>
       </div>
       <div class="accent-presets" id="accent-presets" style="padding:0;">
-        ${ACCENT_PRESETS.map(c => `<div class="accent-preset ${c.toLowerCase() === Prefs.get('accent').toLowerCase() ? 'selected' : ''}" data-color="${c}" style="background:${c}"></div>`).join('')}
+        ${allAccentColors.map(c => `<div class="accent-preset ${c.toLowerCase() === Prefs.get('accent').toLowerCase() ? 'selected' : ''}" data-color="${c}" style="background:${c}"></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;padding:0 0 4px;">
+        <input type="color" id="accent-color-picker" value="${Prefs.get('accent')}"
+          style="width:38px;height:38px;border:1px solid var(--border-strong);border-radius:10px;background:transparent;cursor:pointer;padding:2px;">
+        <input type="text" id="accent-hex-input" value="${Prefs.get('accent').toUpperCase()}"
+          style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--text);font-family:'Questrial',monospace;letter-spacing:0.06em;outline:none;text-transform:uppercase;" maxlength="7">
       </div>
     `;
     appCard.appendChild(accentRow);
@@ -4429,7 +4449,7 @@ function initSettings() {
     widgetsSection.innerHTML = `
       <div class="settings-section-title">ホームのウィジェット</div>
       <div style="font-family:var(--font-ui);font-size:11px;color:var(--text-sub);padding:0 4px 10px;line-height:1.7;">
-        ハンドル <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">drag_indicator</span> を長押しドラッグで並び替え · 目アイコンで表示/非表示
+        ハンドル <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;">drag_indicator</span> を長押しドラッグで並び替え · 表示/非表示
       </div>
     `;
     const widgetList = el('div', { className: 'widget-list', id: 'widget-list' });
@@ -4479,7 +4499,7 @@ function initSettings() {
 
     // === SUBJECTS COLORS ===
     const subjSec = el('div', { className: 'settings-section', style: { marginTop: '28px' } });
-    subjSec.innerHTML = `<div class="settings-section-title">科目のカラー</div>`;
+    subjSec.innerHTML = `<div class="settings-section-title">科目カラー</div>`;
     const subjCard = el('div', { className: 'settings-card' });
     for (const group of State.manifest.groups) {
       for (const subj of group.subjects) {
@@ -4639,6 +4659,38 @@ function initSettings() {
       });
     });
 
+    // カラーピッカー
+    const accentPicker = $('#accent-color-picker');
+    if (accentPicker) {
+      accentPicker.addEventListener('input', () => {
+        Prefs.set('accent', accentPicker.value);
+        const hexInp = $('#accent-hex-input');
+        if (hexInp) hexInp.value = accentPicker.value.toUpperCase();
+        $$('#accent-presets .accent-preset').forEach(x => x.classList.remove('selected'));
+        if (window.__rerenderCharts) window.__rerenderCharts();
+      });
+    }
+
+    // HEX入力
+    const accentHex = $('#accent-hex-input');
+    if (accentHex) {
+      accentHex.addEventListener('change', () => {
+        let v = accentHex.value.trim();
+        if (!v.startsWith('#')) v = '#' + v;
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+          Prefs.set('accent', v);
+          const picker = $('#accent-color-picker');
+          if (picker) picker.value = v;
+          $$('#accent-presets .accent-preset').forEach(x => x.classList.remove('selected'));
+          if (window.__rerenderCharts) window.__rerenderCharts();
+        } else {
+          showToast('カラーコードは #RRGGBB の形式で');
+        }
+      });
+    }
+
+    // Font size segmented   ← 既存のこの行の直前に追加
+
     // Font size segmented
     $$('#fontsize-seg button').forEach(b => {
       b.addEventListener('click', () => {
@@ -4677,7 +4729,7 @@ function initSettings() {
           SubjectColors.set(subjId, v);
           refreshSubjectColor(subjId, v);
         } else {
-          showToast('カラーコードは #RRGGBB の形式で');
+          showToast('カラーコードが適切ではありません');
         }
       });
     });
