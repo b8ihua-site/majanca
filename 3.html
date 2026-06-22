@@ -3983,7 +3983,7 @@ function renderStudy() {
       <span>${escapeHTML(subj.name)}</span>
     </div>
 
-    <h2 class="q-title">${escapeHTML(q.title)}</h2>
+    <h2 class="q-title">${escapeHTML(q.title).replace(/\n/g, '<br>')}</h2>
     <div class="q-answer" id="q-answer">${maskText(q.answer)}</div>
 
     <div class="tap-hint">
@@ -4103,6 +4103,7 @@ function prevQuestion() {
    Masking - 漢字・カタカナ・英数字をマスク、ひらがなや記号は残す
 ===================================================================== */
 function renderText(text, doMask) {
+  text = text.replace(/\\n/g, '\n');
   const MASK_RE = /[\u4E00-\u9FFF\u3400-\u4DBF\u30A0-\u30FF\uFF66-\uFF9FA-Za-z0-9α-ωΑ-Ω]/;
   let out = '';
   let inMask = false;
