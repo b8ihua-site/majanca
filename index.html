@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KCG669Y9HP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-KCG669Y9HP');
+</script>
 <meta charset="UTF-8">
 <title>majanca | 試験対策支援システム</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -3651,7 +3660,7 @@ addCard.innerHTML = `
     </div>
     <div class="subject-text">
       <div class="subject-name" style="color:var(--text-dim);">自分の科目を追加</div>
-      <div class="subject-subname">科目名・英語名・JSONを登録</div>
+      <div class="subject-subname">カスタムJSONを登録</div>
     </div>
   </div>
 `;
@@ -3669,7 +3678,7 @@ function buildSearchCTA() {
       <div class="ic"><span class="material-symbols-outlined">search</span></div>
       <div class="text">
         <div class="t">問題を横断検索</div>
-        <div class="s">キーワード・単元名・問題文から</div>
+        <div class="s">キーワードで検索</div>
       </div>
       <div></div>
     </div>
@@ -3783,7 +3792,7 @@ function buildAudioCard(subj) {
         <div class="subject-name">${escapeHTML(subj.name)} - audio</div>
         <div class="subject-subname">音声で学習</div>
       </div>
-      <div class="subject-start-btn">開始</div>
+      <div class="subject-start-btn">開 始</div>
     </div>
   `;
   return card;
