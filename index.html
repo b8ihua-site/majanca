@@ -289,6 +289,8 @@ body.dark-mode .icon-sun { display: none; }
   transform: translateY(14px);
   transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
   width: 100%;
+  padding-left: 1.6em;   /* ← 追加 */
+  text-indent: -1.6em;   /* ← 追加 */
 }
 
 .hero-sub .text-item.active { opacity: 1; transform: translateY(0); }
@@ -2725,13 +2727,13 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
   <div class="panel-body">
     <div class="custom-subject-form">
       <div class="field-label">科目名</div>
-      <input type="text" id="cs-name" class="search-input" placeholder="例：生理学" style="border-radius:var(--radius-sm);width:100%;">
+      <input type="text" id="cs-name" class="search-input" placeholder="生理学" style="border-radius:var(--radius-sm);width:100%;">
 
       <div class="field-label">英語名</div>
-      <input type="text" id="cs-subname" class="search-input" placeholder="例：Physiology" style="border-radius:var(--radius-sm);width:100%;">
+      <input type="text" id="cs-subname" class="search-input" placeholder="Physiology" style="border-radius:var(--radius-sm);width:100%;">
 
-      <div class="field-label">アイコン名 (2〜4文字)</div>
-      <input type="text" id="cs-icon" class="search-input" placeholder="例：Phy" maxlength="4" style="border-radius:var(--radius-sm);width:100%;">
+      <div class="field-label">アイコン名</div>
+      <input type="text" id="cs-icon" class="search-input" placeholder="Phy" maxlength="4" style="border-radius:var(--radius-sm);width:100%;">
 
       <div class="field-label">カラー</div>
       <div class="swatch-row" id="cs-swatch-row" style="margin-bottom:8px;"></div>
@@ -2741,6 +2743,11 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after {
         <span class="material-symbols-outlined" style="font-size:28px;color:var(--text-dim);">upload_file</span>
         <div id="cs-file-label" style="font-family:var(--font-ui);font-size:13px;color:var(--text-sub);margin-top:6px;">タップしてJSONを選択</div>
       </div>
+      <a href="sample.json" download
+  style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-family:var(--font-ui);font-size:12px;color:var(--text-sub);">
+  <span class="material-symbols-outlined" style="font-size:15px;">download</span>
+  サンプルJSONをダウンロード
+</a>
       <input type="file" id="cs-file-input" accept="application/json" style="display:none;">
 
       <button class="btn-cta" id="cs-save-btn" style="margin-top:24px;" disabled>保存する</button>
@@ -2760,6 +2767,7 @@ const STORAGE = {
   PREFS:   'majanca_prefs_v1',
   COLORS:  'majanca_subject_colors_v1',
   CUSTOM_SUBJECTS: 'majanca_custom_subjects_v1',
+  CUSTOM_DATA:     'majanca_custom_data_v1',
 };
 
 const LS = {
@@ -2864,7 +2872,15 @@ const CustomSubjects = {
   save(list) { LS.set(STORAGE.CUSTOM_SUBJECTS, list); },
   add(subj) { const all = this.load(); all.push(subj); this.save(all); },
   remove(id) { this.save(this.load().filter(s => s.id !== id)); },
-  generateId() { return 'CUST_' + Date.now(); }
+  generateId() { return 'CUST_' + Date.now(); },
+  saveData(id, data) {                          // ← 追加
+    const all = LS.get(STORAGE.CUSTOM_DATA, {});
+    all[id] = data;
+    LS.set(STORAGE.CUSTOM_DATA, all);
+  },
+  loadAllData() {                               // ← 追加
+    return LS.get(STORAGE.CUSTOM_DATA, {});
+  }
 };
 
 // Color palettes
@@ -3319,6 +3335,12 @@ async function renderHome() {
   await Promise.all(
     State.manifest.groups.flatMap(g => g.subjects.map(s => loadSubject(s)))
   );
+
+  // カスタム科目のデータをStateに復元
+const customDataAll = CustomSubjects.loadAllData();
+for (const cs of CustomSubjects.load()) {
+  if (customDataAll[cs.id]) State.subjectsData[cs.id] = customDataAll[cs.id];
+}
 
   const app = $('#app');
   app.innerHTML = '';
@@ -3964,7 +3986,7 @@ function renderSubject(subj, units) {
 
   const hero = el('section', { className: 'subject-hero view' });
   hero.innerHTML = `
-    <div class="subject-icon" style="background:${subjColor}">${subj.id}</div>
+    <div class="subject-icon" style="background:${subjColor}">${subj.icon || subj.id}</div>
     <div>
       <h1>${escapeHTML(subj.name)}</h1>
       <div class="subname">${escapeHTML(subj.subname || '')}</div>
@@ -5218,15 +5240,10 @@ function initCustomSubjectModal() {
       file: null // カスタム科目はfileプロパティ不要
     };
 
-    CustomSubjects.add(newSubj);
-    // データをStateに保存
-    State.subjectsData[newSubj.id] = csJsonData;
-    // iconはsubject-iconに表示するためidの代わりにiconを使う
-    newSubj.icon = icon;
-    // 上書き保存
-    const all = CustomSubjects.load();
-    all[all.length - 1].icon = icon;
-    CustomSubjects.save(all);
+newSubj.icon = icon;
+CustomSubjects.add(newSubj);
+CustomSubjects.saveData(newSubj.id, csJsonData);  // ← localStorageにも保存
+State.subjectsData[newSubj.id] = csJsonData;
 
     close();
     showToast(`${name} を追加しました`);
