@@ -1654,7 +1654,68 @@ body.dark-mode .mask { background: #2a2e36; }
   box-shadow: 0 0 0 2px var(--accent-mid);
   animation: pulse 1.6s ease-in-out infinite;
 }
+.choice-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
 
+.choice-item { display:flex; flex-direction:column; }
+
+.choice-btn {
+  display:flex; align-items:flex-start; gap:12px;
+  width:100%; text-align:left;
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px; font-family:var(--font-body); font-size:var(--font-size-base);
+  line-height:1.6; color:var(--text); cursor:pointer;
+  transition:border-color .2s, background-color .2s, transform .15s var(--ease), border-radius .2s;
+}
+.choice-btn:hover { border-color:var(--border-strong); }
+.choice-btn:active { transform:scale(0.99); }
+
+.choice-label {
+  flex-shrink:0; width:26px; height:26px; border-radius:50%;
+  background:var(--bg-elev); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:600; font-size:12px; color:var(--text-sub);
+  transition: background-color .2s, color .2s;
+}
+.choice-text { flex:1; padding-top:2px; }
+
+.choice-list.answered .choice-btn { cursor:default; }
+.choice-list.answered .choice-btn:not(.selected-correct):not(.selected-wrong):not(.correct-choice) { opacity:.6; }
+
+.choice-btn.selected-correct { border-color:var(--correct); background:var(--correct-soft); }
+.choice-btn.selected-correct .choice-label { background:var(--correct); color:#fff; }
+.choice-btn.selected-wrong { border-color:var(--wrong); background:var(--wrong-soft); }
+.choice-btn.selected-wrong .choice-label { background:var(--wrong); color:#fff; }
+.choice-btn.correct-choice { border-color:var(--correct); }
+.choice-btn.correct-choice .choice-label { background:var(--correct); color:#fff; }
+
+/* 選択肢ごとの個別解説 */
+.choice-exp {
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  font-size:13px;
+  line-height:1.8;
+  color:var(--text-sub);
+  padding:0 16px;
+  transition:max-height .4s var(--ease), opacity .3s var(--ease), padding .3s var(--ease);
+}
+
+.choice-item.expanded .choice-btn {
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+}
+
+.choice-item.expanded .choice-exp {
+  max-height:600px;
+  opacity:1;
+  padding:12px 16px 15px;
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  border-top:none;
+  border-radius:0 0 var(--radius) var(--radius);
+}
+
+.choice-item.expanded.exp-correct .choice-exp { border-color:var(--correct); }
+.choice-item.expanded.exp-wrong .choice-exp { border-color:var(--wrong); }
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--accent-mid); }
   50%      { box-shadow: 0 0 0 5px transparent; }
@@ -3015,12 +3076,26 @@ async function loadSubject(subject) {
     const res = await fetch(subject.file);
     if (!res.ok) throw 0;
     const data = await res.json();
+    enrichChoiceQuestions(data);          // ← 追加
     State.subjectsData[subject.id] = data;
     return data;
   } catch {
     return null;
   }
 }
+
+// ↓ 新規追加。choices配列を持つ問題に、既存の解説UIで使えるexp文字列を自動生成しておく
+function enrichChoiceQuestions(units) {
+  for (const u of units) {
+    for (const q of u.questions) {
+      if (Array.isArray(q.choices) && q.choices.length > 0 && q.overview && !q.exp) {
+        q.exp = q.overview; // 解説パネルには「総評」だけ入れる
+      }
+    }
+  }
+}
+
+
 
 /* =====================================================================
    Routing
@@ -4190,6 +4265,7 @@ function renderStudy() {
   if (State.index >= State.questions.length) return renderFinish();
   const subj = State.currentSubject;
   const q = State.questions[State.index];
+  const choiceMode = Array.isArray(q.choices) && q.choices.length > 0;
   const qidStr = qid(subj.id, q.unitName, q.no);
   const isFlagged = getFlags(subj.id).includes(qidStr);
   const grade = getGrades(subj.id)[qidStr]?.grade;
@@ -4220,13 +4296,15 @@ function renderStudy() {
       <span>${escapeHTML(subj.name)}</span>
     </div>
 
-    <h2 class="q-title">${escapeHTML(q.title).replace(/\n/g, '<br>')}</h2>
-    <div class="q-answer" id="q-answer">${maskText(q.answer)}</div>
+<h2 class="q-title">${escapeHTML(choiceMode ? (q.question || q.title) : q.title).replace(/\n/g, '<br>')}</h2>
+${choiceMode ? buildChoiceListHTML(q) : `
+<div class="q-answer" id="q-answer">${maskText(q.answer)}</div>
 
-    <div class="tap-hint">
-      <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
-      画面をタップまたは<span class="kbd">Space</span>で表示
-    </div>
+<div class="tap-hint">
+  <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
+  画面をタップまたは<span class="kbd">Space</span>で表示
+</div>
+`}
 
     ${q.exp ? `
     <div class="exp-section">
@@ -4304,7 +4382,56 @@ function renderStudy() {
     });
   });
 
-  initMaskReveal();
+if (choiceMode) initChoiceInteraction(); else initMaskReveal();
+
+function buildChoiceListHTML(q) {
+  return `
+    <div class="choice-list" id="choice-list">
+      ${q.choices.map(c => `
+        <div class="choice-item" data-label="${escapeHTML(c.label)}">
+          <button type="button" class="choice-btn" data-label="${escapeHTML(c.label)}" data-correct="${c.correct}">
+            <span class="choice-label">${escapeHTML(c.label)}</span>
+            <span class="choice-text">${escapeHTML(c.text)}</span>
+          </button>
+          <div class="choice-exp">${formatExp(c.exp || '')}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="tap-hint">
+      <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
+      選択肢をタップして解答
+    </div>
+  `;
+}
+
+function initChoiceInteraction() {
+  const list = $('#choice-list');
+  if (!list) return;
+  list.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (list.classList.contains('answered')) return;
+      list.classList.add('answered');
+
+      const correct = btn.dataset.correct === 'true';
+      btn.classList.add(correct ? 'selected-correct' : 'selected-wrong');
+      if (!correct) {
+        list.querySelector('.choice-btn[data-correct="true"]')?.classList.add('correct-choice');
+      }
+
+      // 全選択肢の解説を展開
+      list.querySelectorAll('.choice-item').forEach(item => {
+        item.classList.add('expanded');
+        const isCorrectItem = item.querySelector('.choice-btn').dataset.correct === 'true';
+        item.classList.add(isCorrectItem ? 'exp-correct' : 'exp-wrong');
+      });
+
+      // 総評パネルがあれば開いておく（任意）
+      $('#exp-toggle')?.classList.add('open');
+      $('#exp-body')?.classList.add('open');
+    });
+  });
+}
 
   $('#bottom-nav').classList.add('visible');
   $('#nav-prev').disabled = State.index === 0;
@@ -5254,6 +5381,7 @@ function initCustomSubjectModal() {
 newSubj.icon = icon;
 CustomSubjects.add(newSubj);
 CustomSubjects.saveData(newSubj.id, csJsonData);  // ← localStorageにも保存
+enrichChoiceQuestions(csJsonData);
 State.subjectsData[newSubj.id] = csJsonData;
 
     close();
