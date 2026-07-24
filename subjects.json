@@ -1,6 +1,13 @@
 {
   "version": 1,
   "groups": [
+        {
+      "label": "4年前期科目",
+      "subjects": [
+        { "id": "RE",  "name": "呼吸器病学",   "subname": "Respiratory Medicine",  "color": "#00869E", "file": "re.json"  }
+        
+      ]
+    },
     {
       "label": "3年前期科目",
       "subjects": [
