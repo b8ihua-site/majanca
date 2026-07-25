@@ -4470,12 +4470,19 @@ $('#brand-text').textContent = choiceMode ? 'majanca.choice' : 'majanca'; // ←
     });
   }
 
-  $('#ask-chatgpt-btn').addEventListener('click', e => {
-    e.stopPropagation();
-    const promptText = `この${subj.name}の問題を解説してください：\n${q.title}`;
-    const url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
-    window.open(url, '_blank', 'noopener');
-  });
+$('#ask-chatgpt-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  let promptText;
+  if (choiceMode) {
+    const qText = q.question || q.title;
+    const choicesText = q.choices.map(c => `${c.label}. ${c.text}`).join('\n');
+    promptText = `この${subj.name}の問題を解説してください：\n${qText}\n\n${choicesText}`;
+  } else {
+    promptText = `この${subj.name}の問題を解説してください：\n${q.title}`;
+  }
+  const url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
+  window.open(url, '_blank', 'noopener');
+});
 
   if (!choiceMode) {
     $$('#assess-row .assess-btn').forEach(btn => {
