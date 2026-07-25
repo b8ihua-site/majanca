@@ -1656,18 +1656,26 @@ body.dark-mode .mask { background: #2a2e36; }
 }
 .choice-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
 
-.choice-item { display:flex; flex-direction:column; }
+.choice-item {
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  transition:border-color .2s, opacity .2s;
+}
 
 .choice-btn {
   display:flex; align-items:flex-start; gap:12px;
   width:100%; text-align:left;
-  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--bg); border:none;
   padding:14px 16px; font-family:var(--font-body); font-size:var(--font-size-base);
   line-height:1.6; color:var(--text); cursor:pointer;
-  transition:border-color .2s, background-color .2s, transform .15s var(--ease), border-radius .2s;
+  transition:background-color .15s;
 }
-.choice-btn:hover { border-color:var(--border-strong); }
-.choice-btn:active { transform:scale(0.99); }
+.choice-list:not(.answered) .choice-btn:hover { background:var(--bg-elev); }
+.choice-list:not(.answered) .choice-btn:active { transform:scale(0.99); }
+.choice-list.answered .choice-btn { cursor:default; }
 
 .choice-label {
   flex-shrink:0; width:26px; height:26px; border-radius:50%;
@@ -1677,15 +1685,10 @@ body.dark-mode .mask { background: #2a2e36; }
 }
 .choice-text { flex:1; padding-top:2px; }
 
-.choice-list.answered .choice-btn { cursor:default; }
-.choice-list.answered .choice-btn:not(.selected-correct):not(.selected-wrong):not(.correct-choice) { opacity:.6; }
-
-.choice-btn.selected-correct { border-color:var(--correct); background:var(--correct-soft); }
-.choice-btn.selected-correct .choice-label { background:var(--correct); color:#fff; }
-.choice-btn.selected-wrong { border-color:var(--wrong); background:var(--wrong-soft); }
-.choice-btn.selected-wrong .choice-label { background:var(--wrong); color:#fff; }
-.choice-btn.correct-choice { border-color:var(--correct); }
-.choice-btn.correct-choice .choice-label { background:var(--correct); color:#fff; }
+/* 未選択・不正解だった選択肢は少し薄く */
+.choice-list.answered .choice-item:not(.selected-correct):not(.selected-wrong):not(.correct-choice) {
+  opacity:.6;
+}
 
 /* 選択肢ごとの個別解説 */
 .choice-exp {
@@ -1695,31 +1698,28 @@ body.dark-mode .mask { background: #2a2e36; }
   font-size:13px;
   line-height:1.8;
   color:var(--text-sub);
+  background:var(--bg);
   padding:0 16px;
   transition:max-height .4s var(--ease), opacity .3s var(--ease), padding .3s var(--ease);
-}
-
-.choice-item.expanded .choice-btn {
-  border-bottom-left-radius:0;
-  border-bottom-right-radius:0;
 }
 
 .choice-item.expanded .choice-exp {
   max-height:600px;
   opacity:1;
-  padding:12px 16px 15px;
-  background:var(--bg-elev);
-  border:1px solid var(--border);
-  border-top:none;
-  border-radius:0 0 var(--radius) var(--radius);
+  padding:0 16px 15px;
 }
 
-.choice-item.expanded.exp-correct .choice-exp { border-color:var(--correct); }
-.choice-item.expanded.exp-wrong .choice-exp { border-color:var(--wrong); }
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--accent-mid); }
-  50%      { box-shadow: 0 0 0 5px transparent; }
-}
+/* 正解を選んだ場合：枠線と記号のみ緑、背景は白のまま */
+.choice-item.selected-correct { border-color:var(--correct); }
+.choice-item.selected-correct .choice-label { background:var(--correct); color:#fff; }
+
+/* 不正解を選んだ場合：枠線と記号のみ赤（クリックした選択肢だけ） */
+.choice-item.selected-wrong { border-color:var(--wrong); }
+.choice-item.selected-wrong .choice-label { background:var(--wrong); color:#fff; }
+
+/* 不正解を選んだ際に、正解の選択肢を後から緑でハイライト */
+.choice-item.correct-choice { border-color:var(--correct); }
+.choice-item.correct-choice .choice-label { background:var(--correct); color:#fff; }
 
 .tap-hint {
   margin-top: 24px;
@@ -4413,26 +4413,27 @@ function initChoiceInteraction() {
       if (list.classList.contains('answered')) return;
       list.classList.add('answered');
 
+      const item = btn.closest('.choice-item');
       const correct = btn.dataset.correct === 'true';
-      btn.classList.add(correct ? 'selected-correct' : 'selected-wrong');
+
+      // クリックした選択肢だけに色をつける
+      item.classList.add(correct ? 'selected-correct' : 'selected-wrong');
+
+      // 不正解を選んだ場合のみ、正解の選択肢を緑でハイライト
       if (!correct) {
-        list.querySelector('.choice-btn[data-correct="true"]')?.classList.add('correct-choice');
+        const correctBtn = list.querySelector('.choice-btn[data-correct="true"]');
+        correctBtn?.closest('.choice-item')?.classList.add('correct-choice');
       }
 
-      // 全選択肢の解説を展開
-      list.querySelectorAll('.choice-item').forEach(item => {
-        item.classList.add('expanded');
-        const isCorrectItem = item.querySelector('.choice-btn').dataset.correct === 'true';
-        item.classList.add(isCorrectItem ? 'exp-correct' : 'exp-wrong');
-      });
+      // 全選択肢の解説を展開（色はつけない）
+      list.querySelectorAll('.choice-item').forEach(it => it.classList.add('expanded'));
 
-      // 総評パネルがあれば開いておく（任意）
+      // 総評パネルも開く
       $('#exp-toggle')?.classList.add('open');
       $('#exp-body')?.classList.add('open');
     });
   });
 }
-
   $('#bottom-nav').classList.add('visible');
   $('#nav-prev').disabled = State.index === 0;
   $('#nav-next').onclick = nextQuestion;
