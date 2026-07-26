@@ -4,7 +4,8 @@
         {
       "label": "4年前期科目",
       "subjects": [
-        { "id": "RE",  "name": "呼吸器病学",   "subname": "Respiratory Medicine",  "color": "#00869E", "file": "re.json"  }
+        { "id": "RE",  "name": "呼吸器病学",   "subname": "Respiratory Medicine",  "color": "#00869E", "file": "re.json"  },
+        { "id": "RA",  "name": "放射線医学（ミス多）",   "subname": "Radiology (beta)",  "color": "#D8D80C", "file": "rd.json"  }
         
       ]
     },
