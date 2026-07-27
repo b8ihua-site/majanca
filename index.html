@@ -1717,7 +1717,6 @@ body.dark-mode .mask { background: #2a2e36; }
 .choice-row .choice-btn {
   flex: 1;
 }
-
 .eliminate-btn {
   flex-shrink: 0;
   width: 44px;
@@ -1726,13 +1725,10 @@ body.dark-mode .mask { background: #2a2e36; }
   justify-content: center;
   background: var(--bg);
   border: none;
-  border-left: 1px solid var(--border);
   color: var(--text-dim);
   cursor: pointer;
-  transition: color 0.2s, background-color 0.15s;
+  transition: color 0.2s;
 }
-
-.eliminate-btn:hover { background: var(--bg-elev); }
 
 .eliminate-btn .material-symbols-outlined {
   font-size: 18px;
@@ -1741,7 +1737,6 @@ body.dark-mode .mask { background: #2a2e36; }
 
 .eliminate-btn.active {
   color: var(--wrong);
-  background: var(--wrong-soft);
 }
 
 .eliminate-btn.active .material-symbols-outlined {
@@ -1754,12 +1749,13 @@ body.dark-mode .mask { background: #2a2e36; }
 
 .choice-item.eliminated .choice-text {
   text-decoration: line-through;
-  text-decoration-color: var(--wrong);
+  text-decoration-color: var(--text);
 }
 
 .choice-item.eliminated .choice-label {
   opacity: 0.5;
 }
+
 
 
 /* 正解を選んだ場合：枠線と記号のみ緑、背景は白のまま */
@@ -4662,7 +4658,7 @@ function buildChoiceListHTML(q, existingGrade) {
               <span class="choice-text">${escapeHTML(c.text)}</span>
             </button>
             <button type="button" class="eliminate-btn" data-elim-label="${escapeHTML(c.label)}" title="この選択肢を除外">
-              <span class="material-symbols-outlined">block</span>
+              <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="choice-exp">${formatExp(c.exp || '')}</div>
@@ -5486,6 +5482,12 @@ function initShortcuts() {
     else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'p') { e.preventDefault(); prevQuestion(); }
     else if (e.key === ' ') { e.preventDefault(); if (maskClickHandler) maskClickHandler({ target: document.body }); }
     else if (e.key.toLowerCase() === 'f') $('#flag-btn')?.click();
+    else if (choiceMode && e.shiftKey && /^[a-eA-E]$/.test(e.key)) {
+      e.preventDefault();
+      const label = e.key.toUpperCase();
+      const btn = document.querySelector(`#choice-list .eliminate-btn[data-elim-label="${label}"]`);
+      if (btn && !btn.disabled) btn.click();
+    }
     else if (choiceMode && /^[a-eA-E]$/.test(e.key)) {
       e.preventDefault();
       const label = e.key.toUpperCase();
@@ -5497,14 +5499,6 @@ function initShortcuts() {
   });
 }
 
-function initBrandBack() {
-  $('#brand').addEventListener('click', (e) => {
-    if (parseRoute().name === 'study' && State.currentSubject) {
-      e.preventDefault();
-      go(`/subject/${State.currentSubject.id}`);
-    }
-  });
-}
 
 /* =====================================================================
    Custom Subject Modal
