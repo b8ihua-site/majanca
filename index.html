@@ -5408,11 +5408,21 @@ function initShortcuts() {
     const r = parseRoute();
     if (r.name !== 'study') return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const q = State.questions[State.index];
+    const choiceMode = q && Array.isArray(q.choices) && q.choices.length > 0;
+
     if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'n') { e.preventDefault(); nextQuestion(); }
     else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'p') { e.preventDefault(); prevQuestion(); }
     else if (e.key === ' ') { e.preventDefault(); if (maskClickHandler) maskClickHandler({ target: document.body }); }
     else if (e.key.toLowerCase() === 'f') $('#flag-btn')?.click();
-    else if (e.key.toLowerCase() === 'e') $('#exp-toggle')?.click();
+    else if (choiceMode && /^[a-eA-E]$/.test(e.key)) {
+      e.preventDefault();
+      const label = e.key.toUpperCase();
+      const btn = document.querySelector(`#choice-list .choice-btn[data-label="${label}"]`);
+      if (btn && !btn.disabled) btn.click();
+    }
+    else if (!choiceMode && e.key.toLowerCase() === 'e') $('#exp-toggle')?.click();
     else if (['1','2','3','4'].includes(e.key)) $$('#assess-row .assess-btn')[Number(e.key)-1]?.click();
   });
 }
