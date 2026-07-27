@@ -1709,6 +1709,59 @@ body.dark-mode .mask { background: #2a2e36; }
   padding:0 16px 15px;
 }
 
+.choice-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.choice-row .choice-btn {
+  flex: 1;
+}
+
+.eliminate-btn {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.15s;
+}
+
+.eliminate-btn:hover { background: var(--bg-elev); }
+
+.eliminate-btn .material-symbols-outlined {
+  font-size: 18px;
+  transition: font-variation-settings 0.2s;
+}
+
+.eliminate-btn.active {
+  color: var(--wrong);
+  background: var(--wrong-soft);
+}
+
+.eliminate-btn.active .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.choice-item.eliminated .choice-btn {
+  opacity: 0.45;
+}
+
+.choice-item.eliminated .choice-text {
+  text-decoration: line-through;
+  text-decoration-color: var(--wrong);
+}
+
+.choice-item.eliminated .choice-label {
+  opacity: 0.5;
+}
+
+
 /* 正解を選んだ場合：枠線と記号のみ緑、背景は白のまま */
 .choice-item.selected-correct { border-color:#4d7adb; }
 .choice-item.selected-correct .choice-label { background:#4d7adb; color:#fff; }
@@ -4603,10 +4656,15 @@ function buildChoiceListHTML(q, existingGrade) {
         const itemCls = revealedCorrect ? 'expanded correct-choice' : (answered ? 'expanded' : '');
         return `
         <div class="choice-item ${itemCls}" data-label="${escapeHTML(c.label)}">
-          <button type="button" class="choice-btn" data-label="${escapeHTML(c.label)}" data-correct="${c.correct}" ${answered ? 'disabled' : ''}>
-            <span class="choice-label">${escapeHTML(c.label)}</span>
-            <span class="choice-text">${escapeHTML(c.text)}</span>
-          </button>
+          <div class="choice-row">
+            <button type="button" class="choice-btn" data-label="${escapeHTML(c.label)}" data-correct="${c.correct}" ${answered ? 'disabled' : ''}>
+              <span class="choice-label">${escapeHTML(c.label)}</span>
+              <span class="choice-text">${escapeHTML(c.text)}</span>
+            </button>
+            <button type="button" class="eliminate-btn" data-elim-label="${escapeHTML(c.label)}" title="この選択肢を除外">
+              <span class="material-symbols-outlined">block</span>
+            </button>
+          </div>
           <div class="choice-exp">${formatExp(c.exp || '')}</div>
         </div>`;
       }).join('')}
@@ -4614,7 +4672,7 @@ function buildChoiceListHTML(q, existingGrade) {
     ${!answered ? `
     <div class="tap-hint">
       <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
-      選択肢をタップして解答
+      選択肢をタップして解答 · 右のアイコンで除外
     </div>` : ''}
   `;
 }
@@ -4633,7 +4691,6 @@ function initChoiceInteraction(subj, qidStr, existingGrade) {
       const item = btn.closest('.choice-item');
       item.classList.add(clickedCorrect ? 'selected-correct' : 'selected-wrong');
 
-      // 全選択肢のラベルを正解=まる、それ以外=バツに変更
       list.querySelectorAll('.choice-item').forEach(it => {
         const b = it.querySelector('.choice-btn');
         const isCorrect = b.dataset.correct === 'true';
@@ -4646,11 +4703,24 @@ function initChoiceInteraction(subj, qidStr, existingGrade) {
         b.disabled = true;
       });
 
-      // 正誤を自動記録（まる=2 / バツ=0）
+      // 除外ボタンも解答後は無効化
+      list.querySelectorAll('.eliminate-btn').forEach(eb => eb.disabled = true);
+
       setGrade(subj.id, qidStr, clickedCorrect ? 2 : 0);
 
       $('#exp-toggle')?.classList.add('open');
       $('#exp-body')?.classList.add('open');
+    });
+  });
+
+  // 除外ボタン
+  list.querySelectorAll('.eliminate-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (list.classList.contains('answered')) return;
+      const item = btn.closest('.choice-item');
+      const now = item.classList.toggle('eliminated');
+      btn.classList.toggle('active', now);
     });
   });
 }
