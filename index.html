@@ -5500,6 +5500,16 @@ function initShortcuts() {
 }
 
 
+function initBrandBack() {
+  $('#brand').addEventListener('click', (e) => {
+    if (parseRoute().name === 'study' && State.currentSubject) {
+      e.preventDefault();
+      go(`/subject/${State.currentSubject.id}`);
+    }
+  });
+}
+
+
 /* =====================================================================
    Custom Subject Modal
 ===================================================================== */
