@@ -28,7 +28,7 @@
     -webkit-backdrop-filter:blur(10px) saturate(240%);
     border:1px solid rgba(255,255,255,0.85);
     box-shadow:
-      0 10px 5px rgba(0,0,0,0.01),
+      0 10px 10px rgba(0,0,0,0.01),
       0 2px 8px rgba(0,0,0,0.06),
       inset 0 1px 1px rgba(255,255,255,0.95),
       inset 0 -6px 14px rgba(255,255,255,0.25);
@@ -62,7 +62,7 @@
   }
   .title-text{ min-width:0; }
   header h1{
-    font-size:16px; font-weight:700; margin:0; letter-spacing:.02em;
+    font-size:16px; font-weight:500; margin:0; letter-spacing:.02em;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     line-height:1.25;
   }
@@ -134,6 +134,7 @@
 
   svg.links{ position:absolute; top:0; left:0; pointer-events:none; overflow:visible; }
   .link-path{ fill:none; stroke:var(--line-red); stroke-linecap:round; }
+  .aorta-curve{ fill:none; stroke:var(--line-red); stroke-linecap:round; stroke-linejoin:round; }
 
   .node{
     position:absolute;
@@ -154,8 +155,8 @@
   .node-card.match .material-icons{ color:var(--line-red); }
 
   .node-jp{ font-size:14px; font-weight:500; }
-  .depth-0 .node-card{ padding:5px 16px 5px 20px; border-width:2px; }
-  .depth-0 .node-jp{ font-size:15px; font-weight:700; }
+  .depth-1 .node-card{ padding:5px 16px 5px 20px; border-width:2px; }
+  .depth-1 .node-jp{ font-size:15px; font-weight:700; }
 
   .material-icons{
     font-size:18px; color:#111; line-height:1;
@@ -165,7 +166,6 @@
 
   .modal-overlay{
     position:fixed; inset:0; 
-    
     display:none; align-items:center; justify-content:center; z-index:100;
     padding:20px;
   }
@@ -202,7 +202,7 @@
     <div class="controls">
       <div class="glass search-pill" id="searchPill">
         <button class="search-toggle" id="searchToggle" type="button"><span class="material-icons">search</span></button>
-        <input id="search" type="text" placeholder="検索">
+        <input id="search" type="text" placeholder="動脈名で検索">
       </div>
     </div>
   </header>
@@ -520,35 +520,67 @@ function elbowPath(x1, y1, x2, y2, midX, r){
 }
 
 let leafCounter = 0;
-function layout(node){
-  leafCounter = 0;
-  const positioned = [];
-  function walk(n, depth){
-    let y;
-    if(!n._expanded || !n.children || n.children.length===0){
-      y = START_Y + leafCounter*ROW_H;
-      leafCounter++;
-    } else {
-      const ys = n.children.map(c => walk(c, depth+1));
-      y = (ys[0]+ys[ys.length-1])/2;
-    }
-    const x = START_X + depth*COL_W;
-    positioned.push({node:n, x, y, depth});
-    return y;
+
+// 4本の基幹（上行大動脈・大動脈弓・胸大動脈・腹大動脈）を、
+// 大動脈弓を頂点とした「逆J字」の抽象的なアーチ上に固定する。
+// アーチは半径Rの丸みだけで構成される、幾何学的にきれいな形にする。
+const ARCH_R = 90;      // アーチの丸みの半径
+const ARCH_PEAK_Y = 140; // アーチ頂点のy座標
+const TRUNK_X = 420;     // 胸大動脈・腹大動脈が並ぶ縦のライン
+const ASCEND_X = TRUNK_X - ARCH_R*2; // 上行大動脈のx座標（半径2つ分左）
+const ARCH_PEAK_X = ASCEND_X + ARCH_R; // アーチ頂点＝上行大動脈と胸大動脈の中間
+
+const ANATOMY_ANCHORS = [
+  { jp:"上行大動脈", x:ASCEND_X, y:ARCH_PEAK_Y + ARCH_R + 140 },
+  { jp:"大動脈弓",   x:ARCH_PEAK_X, y:ARCH_PEAK_Y },
+  { jp:"胸大動脈",   x:TRUNK_X, y:600 },
+  { jp:"腹大動脈",   x:TRUNK_X, y:1050 }
+];
+
+function walkRelative(n, depth, leafRef, out){
+  let y;
+  if(!n._expanded || !n.children || n.children.length===0){
+    y = leafRef.count*ROW_H;
+    leafRef.count++;
+  } else {
+    const ys = n.children.map(c => walkRelative(c, depth+1, leafRef, out));
+    y = (ys[0]+ys[ys.length-1])/2;
   }
-  walk(node, 0);
+  out.push({ node:n, relDepth:depth, relY:y });
+  return y;
+}
+
+function layout(){
+  const positioned = [];
+  TREE.children.forEach((anchorNode, i) => {
+    const anchor = ANATOMY_ANCHORS[i];
+    const rel = [];
+    const leafRef = { count:0 };
+    const anchorRelY = walkRelative(anchorNode, 0, leafRef, rel);
+    const shiftY = anchor.y - anchorRelY;
+    rel.forEach(p => {
+      positioned.push({
+        node: p.node,
+        x: anchor.x + p.relDepth*COL_W,
+        y: p.relY + shiftY,
+        depth: p.relDepth + 1 // 大動脈(ルート)を depth0 とした絶対深さ
+      });
+    });
+  });
   return positioned;
 }
 
 let searchTerm = "";
 
 function render(){
-  const positions = layout(TREE);
+  const positions = layout();
   const map = {};
   positions.forEach(p => map[p.node._id] = p);
 
-  const maxX = Math.max(...positions.map(p=>p.x)) + COL_W;
-  const maxY = Math.max(...positions.map(p=>p.y)) + ROW_H + BOTTOM_PAD;
+  const allX = positions.map(p=>p.x).concat(ANATOMY_ANCHORS.map(a=>a.x));
+  const allY = positions.map(p=>p.y).concat(ANATOMY_ANCHORS.map(a=>a.y));
+  const maxX = Math.max(...allX) + COL_W;
+  const maxY = Math.max(...allY) + ROW_H + BOTTOM_PAD;
   canvas.style.width = maxX + "px";
   canvas.style.height = maxY + "px";
   applyTransform();
@@ -581,6 +613,20 @@ function render(){
     widthById[el.dataset.id] = el.offsetWidth;
   });
   let linkSvg = "";
+
+  // 解剖学的な大動脈の基幹カーブ（逆J字：上行大動脈→大動脈弓→胸大動脈→腹大動脈）
+  const [UP, ARCH, THO, ABD] = ANATOMY_ANCHORS;
+  const r = ARCH_R;
+  const aortaPath = `
+    M${UP.x},${UP.y}
+    L${ASCEND_X},${ARCH_PEAK_Y + r}
+    Q${ASCEND_X},${ARCH_PEAK_Y} ${ASCEND_X + r},${ARCH_PEAK_Y}
+    Q${TRUNK_X},${ARCH_PEAK_Y} ${TRUNK_X},${ARCH_PEAK_Y + r}
+    L${THO.x},${THO.y}
+    L${ABD.x},${ABD.y}
+  `;
+  linkSvg += `<path class="aorta-curve" d="${aortaPath}" stroke-width="11"/>`;
+
   positions.forEach(p => {
     if(p.node._expanded && p.node.children){
       const x1 = p.x + (widthById[p.node._id] || 0);
