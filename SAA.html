@@ -2,11 +2,20 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>全身動脈アトラス</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<style>
+  .material-symbols-outlined{
+    font-family:'Material Symbols Outlined';
+    font-weight:normal; font-style:normal;
+    font-size:17px; line-height:1; color:#fff;
+    -webkit-font-smoothing:antialiased;
+  }
+</style>
 <style>
   :root{
     --line-red:#B3261E;
@@ -51,14 +60,18 @@
   }
 
   header{
-    position:absolute; top:16px; left:16px; right:16px; z-index:50;
+    position:absolute;
+    top: max(16px, calc(env(safe-area-inset-top) + 12px));
+    left: max(16px, calc(env(safe-area-inset-left) + 16px));
+    right: max(16px, calc(env(safe-area-inset-right) + 16px));
+    z-index:50;
     display:flex; align-items:center; gap:12px;
     background:none; border:none; box-shadow:none;
   }
   .title-pill{
     padding:9px 22px; border-radius:20px;
     display:flex; align-items:center;
-    flex-shrink:1; min-width:0;
+    flex-shrink:0;
   }
   .title-text{ min-width:0; }
   header h1{
@@ -70,7 +83,11 @@
     font-size:10px; color:#666; letter-spacing:.08em;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .controls{ display:flex; margin-left:auto; align-items:center; flex-shrink:0; }
+  .controls{
+    display:flex; align-items:center;
+    position:absolute; top:0; right:0; height:100%;
+    z-index:2;
+  }
 
   .search-pill{
     border-radius:999px;
@@ -98,6 +115,20 @@
   .search-pill.expanded input[type=text]{ width:170px; opacity:1; }
   input[type=text]::placeholder{ color:#666; }
 
+  .search-results{
+    position:absolute; top:calc(100% + 8px); right:0; width:230px;
+    max-height:340px; overflow-y:auto; border-radius:18px;
+    padding:6px; display:none; z-index:60;
+  }
+  .search-results.open{ display:block; }
+  .search-item{
+    padding:10px 14px; border-radius:12px; font-size:13px; cursor:pointer;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .search-item:hover{ background:rgba(255,255,255,0.5); }
+  .search-item .hl{ color:var(--line-red); font-weight:700; }
+  .search-empty{ padding:14px; font-size:12px; color:#777; text-align:center; }
+
   button.ctrl{
     color:#111;
     cursor:pointer;
@@ -107,7 +138,10 @@
   button.ctrl:hover{ background:rgba(255,255,255,0.4); }
 
   .toolbar{
-    position:absolute; bottom:20px; left:16px; z-index:50;
+    position:absolute;
+    bottom: max(20px, calc(env(safe-area-inset-bottom) + 14px));
+    left: max(16px, calc(env(safe-area-inset-left) + 16px));
+    z-index:50;
     display:flex; align-items:center; gap:10px;
     background:none; border:none; box-shadow:none;
   }
@@ -119,6 +153,7 @@
     padding:0;
   }
   .round-btn .material-icons{ font-size:20px; }
+  .round-btn .material-symbols-outlined{ font-size:20px; color:#111; }
 
   .zoom-group{ display:flex; align-items:center; gap:2px; border-radius:999px; padding:4px; }
   button.icon-btn{ padding:6px; border:none; background:transparent; border-radius:999px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; }
@@ -140,29 +175,38 @@
     position:absolute;
     transform:translate(0,-50%);
     white-space:nowrap;
+    display:flex; align-items:center; gap:0;
+  }
+  .node.dir-left{
+    transform:translate(-100%,-50%);
+    flex-direction:row-reverse;
   }
   .node-card{
     background:#fff;
     border:1.5px solid #111;
     border-radius:999px;
-    padding:4.5px 14px 4.5px 18px;
+    padding:4.5px 18px;
     cursor:pointer;
     user-select:none;
-    display:flex; align-items:center; gap:6px;
   }
   .node-card:hover{ background:#f5f5f5; }
   .node-card.match{ border-color:var(--line-red); color:var(--line-red); }
-  .node-card.match .material-icons{ color:var(--line-red); }
 
   .node-jp{ font-size:14px; font-weight:500; }
-  .depth-1 .node-card{ padding:5px 16px 5px 20px; border-width:2px; }
+  .depth-1 .node-card{ padding:5px 20px; border-width:2px; }
   .depth-1 .node-jp{ font-size:15px; font-weight:700; }
 
   .material-icons{
     font-size:18px; color:#111; line-height:1;
   }
-  .icon-slot{ width:18px; display:flex; align-items:center; justify-content:center; }
-  .icon-slot.leaf{ visibility:hidden; }
+  .round-toggle{
+    width:30px; height:30px; flex-shrink:0;
+    border-radius:999px; border:1.5px solid #333; background:#333;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0;
+  }
+  .round-toggle:hover{ background:#333; }
+  .round-toggle .material-icons{ font-size:17px; color:#fff; }
 
   .modal-overlay{
     position:fixed; inset:0; 
@@ -193,7 +237,9 @@
 <body>
 <div class="app">
   <header>
-    <div class="glass title-pill">
+    <div class="title-pill" style="box-shadow:none; padding:0; border-radius:0; background:none;
+    backdrop-filter:blur(0px) saturate(100%);
+    -webkit-backdrop-filter:blur(0px) saturate(100%); border:none;">
       <div class="title-text">
         <h1>全身動脈アトラス</h1>
         <div class="title-sub">Systemic Arterial Atlas</div>
@@ -204,6 +250,7 @@
         <button class="search-toggle" id="searchToggle" type="button"><span class="material-icons">search</span></button>
         <input id="search" type="text" placeholder="動脈名で検索">
       </div>
+      <div class="search-results glass" id="searchResults"></div>
     </div>
   </header>
   <div class="canvas-wrap" id="canvasWrap">
@@ -213,8 +260,8 @@
     </div>
   </div>
   <div class="toolbar">
-    <button class="ctrl glass round-btn" id="expandAll" title="全て展開"><span class="material-icons">unfold_more</span></button>
-    <button class="ctrl glass round-btn" id="collapseAll" title="全て閉じる"><span class="material-icons">unfold_less</span></button>
+    <button class="ctrl glass round-btn" id="expandAll" title="全て展開"><span class="material-symbols-outlined">expand_content</span></button>
+    <button class="ctrl glass round-btn" id="collapseAll" title="全て閉じる"><span class="material-symbols-outlined">collapse_content</span></button>
     <span class="zoom-group glass">
       <button class="ctrl icon-btn" id="zoomOut"><span class="material-icons">remove</span></button>
       <button class="ctrl icon-btn" id="zoomIn"><span class="material-icons">add</span></button>
@@ -504,18 +551,19 @@ function widthForDepth(d){
   return Math.max(5 - d*0.7, 1.2);
 }
 
-// 90度で分岐し、角だけ丸めたコネクタパスを作る
+// 90度で分岐し、角だけ丸めたコネクタパスを作る（左向き分岐にも対応）
 function elbowPath(x1, y1, x2, y2, midX, r){
   if(Math.abs(y2-y1) < 0.5){
     return `M${x1},${y1} L${x2},${y2}`;
   }
-  const dir = y2 > y1 ? 1 : -1;
-  const rr = Math.max(0, Math.min(r, midX-x1, x2-midX, Math.abs(y2-y1)/2));
+  const vdir = y2 > y1 ? 1 : -1;
+  const hdir = x2 > x1 ? 1 : -1;
+  const rr = Math.max(0, Math.min(r, Math.abs(midX-x1), Math.abs(x2-midX), Math.abs(y2-y1)/2));
   return `M${x1},${y1}
-    L${midX-rr},${y1}
-    Q${midX},${y1} ${midX},${y1+dir*rr}
-    L${midX},${y2-dir*rr}
-    Q${midX},${y2} ${midX+rr},${y2}
+    L${midX-hdir*rr},${y1}
+    Q${midX},${y1} ${midX},${y1+vdir*rr}
+    L${midX},${y2-vdir*rr}
+    Q${midX},${y2} ${midX+hdir*rr},${y2}
     L${x2},${y2}`;
 }
 
@@ -531,11 +579,12 @@ const ASCEND_X = TRUNK_X - ARCH_R*2; // 上行大動脈のx座標（半径2つ�
 const ARCH_PEAK_X = ASCEND_X + ARCH_R; // アーチ頂点＝上行大動脈と胸大動脈の中間
 
 const ANATOMY_ANCHORS = [
-  { jp:"上行大動脈", x:ASCEND_X, y:ARCH_PEAK_Y + ARCH_R + 140 },
-  { jp:"大動脈弓",   x:ARCH_PEAK_X, y:ARCH_PEAK_Y },
-  { jp:"胸大動脈",   x:TRUNK_X, y:600 },
-  { jp:"腹大動脈",   x:TRUNK_X, y:1050 }
+  { jp:"上行大動脈", x:ASCEND_X, y:ARCH_PEAK_Y + ARCH_R + 140, dir:-1 }, // 子は左向きに展開
+  { jp:"大動脈弓",   x:ARCH_PEAK_X, y:ARCH_PEAK_Y, dir:1 },
+  { jp:"胸大動脈",   x:TRUNK_X, y:600, dir:1 },  // 初期値。展開状況に応じてlayout()内で下に押し出す
+  { jp:"腹大動脈",   x:TRUNK_X, y:1050, dir:1 }  // 同上
 ];
+const VERTICAL_GAP = 70; // 展開されたサブツリー同士の最低限の縦の余白
 
 function walkRelative(n, depth, leafRef, out){
   let y;
@@ -550,35 +599,69 @@ function walkRelative(n, depth, leafRef, out){
   return y;
 }
 
+// サブツリーの相対レイアウトだけを先に計算する（まだどのYに置くかは決めない）
+function computeRelative(anchorNode){
+  const rel = [];
+  const leafRef = { count:0 };
+  const anchorRelY = walkRelative(anchorNode, 0, leafRef, rel);
+  return { rel, anchorRelY };
+}
+
+// 計算済みの相対レイアウトを、指定したアンカーX/Yに配置する。
+// 上端・下端の絶対Y座標も返す（次の基幹をどこまで押し下げるべきか判定するため）
+function placeBranch(computed, anchorX, anchorY, dir, positioned){
+  const shiftY = anchorY - computed.anchorRelY;
+  let top = anchorY, bottom = anchorY;
+  computed.rel.forEach(p => {
+    const y = p.relY + shiftY;
+    if(y > bottom) bottom = y;
+    if(y < top) top = y;
+    positioned.push({ node:p.node, x: anchorX + dir*p.relDepth*COL_W, y, depth: p.relDepth + 1, dir });
+  });
+  return { top, bottom };
+}
+
 function layout(){
   const positioned = [];
-  TREE.children.forEach((anchorNode, i) => {
-    const anchor = ANATOMY_ANCHORS[i];
-    const rel = [];
-    const leafRef = { count:0 };
-    const anchorRelY = walkRelative(anchorNode, 0, leafRef, rel);
-    const shiftY = anchor.y - anchorRelY;
-    rel.forEach(p => {
-      positioned.push({
-        node: p.node,
-        x: anchor.x + p.relDepth*COL_W,
-        y: p.relY + shiftY,
-        depth: p.relDepth + 1 // 大動脈(ルート)を depth0 とした絶対深さ
-      });
-    });
-  });
+  const [upA, archA, thoA, abdA] = ANATOMY_ANCHORS;
+  const [upNode, archNode, thoNode, abdNode] = TREE.children;
+
+  const upRel = computeRelative(upNode);
+  const archRel = computeRelative(archNode);
+  const thoRel = computeRelative(thoNode);
+  const abdRel = computeRelative(abdNode);
+
+  // 上行大動脈・大動脈弓はアーチの形を保つため固定位置のまま
+  const upExtent = placeBranch(upRel, upA.x, upA.y, upA.dir, positioned);
+  const archExtent = placeBranch(archRel, archA.x, archA.y, archA.dir, positioned);
+
+  // 胸大動脈は、上のふたつが展開されて伸びてきても重ならない位置まで押し下げる
+  // （胸大動脈自身が上に張り出す分＝anchorRelY も見込んで余白を取る）
+  const clearAbove = Math.max(upExtent.bottom, archExtent.bottom) + VERTICAL_GAP;
+  const thoY = Math.max(thoA.y, clearAbove + thoRel.anchorRelY);
+  const thoExtent = placeBranch(thoRel, thoA.x, thoY, thoA.dir, positioned);
+
+  // 腹大動脈は、胸大動脈が伸びてきても重ならない位置まで押し下げる
+  const abdY = Math.max(abdA.y, thoExtent.bottom + VERTICAL_GAP + abdRel.anchorRelY);
+  placeBranch(abdRel, abdA.x, abdY, abdA.dir, positioned);
+
+  // 実際に描画で使ったアンカー座標を保存（アーチ曲線の再描画用）
+  layout._resolved = [
+    { x:upA.x, y:upA.y }, { x:archA.x, y:archA.y }, { x:thoA.x, y:thoY }, { x:abdA.x, y:abdY }
+  ];
   return positioned;
 }
 
-let searchTerm = "";
+let highlightedId = null;
 
 function render(){
   const positions = layout();
+  const resolved = layout._resolved;
   const map = {};
   positions.forEach(p => map[p.node._id] = p);
 
-  const allX = positions.map(p=>p.x).concat(ANATOMY_ANCHORS.map(a=>a.x));
-  const allY = positions.map(p=>p.y).concat(ANATOMY_ANCHORS.map(a=>a.y));
+  const allX = positions.map(p=>p.x).concat(resolved.map(a=>a.x));
+  const allY = positions.map(p=>p.y).concat(resolved.map(a=>a.y));
   const maxX = Math.max(...allX) + COL_W;
   const maxY = Math.max(...allY) + ROW_H + BOTTOM_PAD;
   canvas.style.width = maxX + "px";
@@ -591,17 +674,17 @@ function render(){
 
   // nodes
   let html = "";
-  const term = searchTerm.trim();
   positions.forEach(p => {
     const n = p.node;
     const hasChildren = n.children && n.children.length>0;
-    const isMatch = term.length>0 && n.jp.includes(term);
+    const isMatch = n._id === highlightedId;
     const icon = hasChildren ? (n._expanded ? 'remove' : 'add') : '';
-    html += `<div class="node depth-${p.depth}" style="left:${p.x}px; top:${p.y}px;">
+    const dirClass = p.dir === -1 ? 'dir-left' : '';
+    html += `<div class="node depth-${p.depth} ${dirClass}" style="left:${p.x}px; top:${p.y}px;">
       <div class="node-card ${isMatch?'match':''}" data-id="${n._id}">
         <span class="node-jp">${n.jp}</span>
-        <span class="icon-slot ${hasChildren?'':'leaf'}" data-id="${n._id}"><span class="material-icons">${icon}</span></span>
       </div>
+      ${hasChildren ? `<button class="round-toggle" data-id="${n._id}"><span class="material-icons">${icon}</span></button>` : ''}
     </div>`;
   });
   nodesEl.innerHTML = html;
@@ -612,16 +695,16 @@ function render(){
   nodesEl.querySelectorAll('.node-card').forEach(el => {
     widthById[el.dataset.id] = el.offsetWidth;
   });
+  const BUTTON_OFFSET = 30; // 丸ボタンの幅（カードとは隙間なく密着）
   let linkSvg = "";
 
   // 解剖学的な大動脈の基幹カーブ（逆J字：上行大動脈→大動脈弓→胸大動脈→腹大動脈）
-  const [UP, ARCH, THO, ABD] = ANATOMY_ANCHORS;
+  const [UP, ARCH, THO, ABD] = resolved;
   const r = ARCH_R;
   const aortaPath = `
     M${UP.x},${UP.y}
     L${ASCEND_X},${ARCH_PEAK_Y + r}
-    Q${ASCEND_X},${ARCH_PEAK_Y} ${ASCEND_X + r},${ARCH_PEAK_Y}
-    Q${TRUNK_X},${ARCH_PEAK_Y} ${TRUNK_X},${ARCH_PEAK_Y + r}
+    A${r},${r} 0 0 1 ${TRUNK_X},${ARCH_PEAK_Y + r}
     L${THO.x},${THO.y}
     L${ABD.x},${ABD.y}
   `;
@@ -629,7 +712,8 @@ function render(){
 
   positions.forEach(p => {
     if(p.node._expanded && p.node.children){
-      const x1 = p.x + (widthById[p.node._id] || 0);
+      const cardW = widthById[p.node._id] || 0;
+      const x1 = p.dir === -1 ? (p.x - cardW - BUTTON_OFFSET) : (p.x + cardW + BUTTON_OFFSET);
       const y1 = p.y;
       p.node.children.forEach(c => {
         const cp = map[c._id];
@@ -652,9 +736,8 @@ function render(){
       if(found) openModal(found);
     });
   });
-  nodesEl.querySelectorAll('.icon-slot:not(.leaf)').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
+  nodesEl.querySelectorAll('.round-toggle').forEach(el => {
+    el.addEventListener('click', () => {
       const id = el.dataset.id;
       const found = findById(TREE, id);
       if(found && found.children && found.children.length){
@@ -714,18 +797,31 @@ function expandAll(node, v){
   }
 }
 
-function expandPathTo(node, term, path){
-  path.push(node);
-  const match = node.jp.includes(term);
-  let found = match;
-  if(node.children){
-    for(const c of node.children){
-      if(expandPathTo(c, term, path)) found = true;
-    }
+// 指定した葉ノードだけが見えるように、そこに至る経路上の祖先だけを展開し、
+// それ以外はすべて畳む（対象ノード自身は展開しない＝兄弟は見えるが中身は開かない）
+function collapseAllFlags(n){
+  if(n.children){
+    n._expanded = false;
+    n.children.forEach(collapseAllFlags);
   }
-  if(found && node.children && node.children.length){ node._expanded = true; }
-  if(!found) path.pop();
-  return found;
+}
+function revealNode(id){
+  const target = findById(TREE, id);
+  if(!target) return;
+  collapseAllFlags(TREE);
+  const path = [];
+  findPath(TREE, id, path);
+  path.forEach(n => {
+    if(n !== target && n.children && n.children.length){
+      n._expanded = true;
+    }
+  });
+  highlightedId = id;
+  render();
+  requestAnimationFrame(() => {
+    const el = nodesEl.querySelector(`.node-card[data-id="${id}"]`);
+    if(el) panToElement(el);
+  });
 }
 
 document.getElementById('expandAll').addEventListener('click', () => {
@@ -748,16 +844,53 @@ function panToElement(el){
   applyTransform();
   setTimeout(() => { canvas.style.transition = ''; }, 360);
 }
+
+// 検索：入力にヒットする動脈をリスト表示し、一致部分を赤字にする
+const searchResultsEl = document.getElementById('searchResults');
+function collectMatches(term){
+  const results = [];
+  function walk(n){
+    if(n !== TREE && n.jp.includes(term)) results.push(n);
+    if(n.children) n.children.forEach(walk);
+  }
+  walk(TREE);
+  return results;
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function renderSearchResults(rawTerm){
+  const term = rawTerm.trim();
+  if(term.length === 0){
+    searchResultsEl.classList.remove('open');
+    searchResultsEl.innerHTML = '';
+    return;
+  }
+  const matches = collectMatches(term).slice(0, 40);
+  if(matches.length === 0){
+    searchResultsEl.innerHTML = `<div class="search-empty">見つかりません</div>`;
+    searchResultsEl.classList.add('open');
+    return;
+  }
+  searchResultsEl.innerHTML = matches.map(n => {
+    const idx = n.jp.indexOf(term);
+    const before = escapeHtml(n.jp.slice(0, idx));
+    const hit = escapeHtml(n.jp.slice(idx, idx + term.length));
+    const after = escapeHtml(n.jp.slice(idx + term.length));
+    return `<div class="search-item" data-id="${n._id}">${before}<span class="hl">${hit}</span>${after}</div>`;
+  }).join('');
+  searchResultsEl.classList.add('open');
+  searchResultsEl.querySelectorAll('.search-item').forEach(el => {
+    el.addEventListener('click', () => {
+      revealNode(el.dataset.id);
+      searchResultsEl.classList.remove('open');
+      searchInput.value = '';
+      searchPill.classList.remove('expanded');
+    });
+  });
+}
 searchInput.addEventListener('input', (e) => {
-  searchTerm = e.target.value;
-  if(searchTerm.trim().length>0){
-    expandPathTo(TREE, searchTerm.trim(), []);
-  }
-  render();
-  if(searchTerm.trim().length>0){
-    const matchEl = nodesEl.querySelector('.match');
-    if(matchEl) panToElement(matchEl);
-  }
+  renderSearchResults(e.target.value);
 });
 
 // 検索：丸いアイコンボタンをタップすると伸びて入力欄が出る
@@ -767,17 +900,19 @@ searchToggle.addEventListener('click', () => {
   if(searchPill.classList.contains('expanded')){
     searchPill.classList.remove('expanded');
     searchInput.value = '';
-    searchTerm = '';
-    render();
+    renderSearchResults('');
   } else {
     searchPill.classList.add('expanded');
     setTimeout(() => searchInput.focus(), 220);
   }
 });
 searchInput.addEventListener('blur', () => {
-  if(searchInput.value.trim().length === 0){
-    searchPill.classList.remove('expanded');
-  }
+  setTimeout(() => {
+    if(searchInput.value.trim().length === 0){
+      searchPill.classList.remove('expanded');
+      searchResultsEl.classList.remove('open');
+    }
+  }, 150);
 });
 
 function clampZoom(z){ return Math.min(2.5, Math.max(0.3, z)); }
@@ -874,6 +1009,23 @@ wrap.addEventListener('touchend', (e) => {
 });
 
 render();
+
+// 初期表示：上行・弓・胸・腹の全体が画面に収まるようズーム・位置を合わせる
+function fitToView(){
+  const resolved = layout._resolved || ANATOMY_ANCHORS;
+  const pad = 260;
+  const minX = Math.min(...resolved.map(a=>a.x)) - pad;
+  const maxX = Math.max(...resolved.map(a=>a.x)) + pad;
+  const minY = Math.min(...resolved.map(a=>a.y)) - pad;
+  const maxY = Math.max(...resolved.map(a=>a.y)) + pad;
+  const rect = wrap.getBoundingClientRect();
+  const scale = clampZoom(Math.min(rect.width/(maxX-minX), rect.height/(maxY-minY)));
+  zoom = scale;
+  panX = rect.width/2 - (minX+maxX)/2*zoom;
+  panY = rect.height/2 - (minY+maxY)/2*zoom;
+  applyTransform();
+}
+fitToView();
 </script>
 </body>
 </html>
