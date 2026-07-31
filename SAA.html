@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全身動脈アトラス</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<style>
+  :root{
+    --line-red:#B3261E;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#ffffff;
+    color:#111111;
+    font-family:'Noto Sans JP', sans-serif;
+    overflow:hidden;
+  }
+  .app{ position:relative; height:100vh; overflow:hidden; }
+
+  .glass{
+    position:relative;
+    background:rgba(255,255,255,0.22);
+    backdrop-filter:blur(10px) saturate(240%);
+    -webkit-backdrop-filter:blur(10px) saturate(240%);
+    border:1px solid rgba(255,255,255,0.85);
+    box-shadow:
+      0 10px 5px rgba(0,0,0,0.01),
+      0 2px 8px rgba(0,0,0,0.06),
+      inset 0 1px 1px rgba(255,255,255,0.95),
+      inset 0 -6px 14px rgba(255,255,255,0.25);
+    overflow:hidden;
+    isolation:isolate;
+  }
+  .glass::before{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(135deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.08) 35%, rgba(255,255,255,0) 55%, rgba(255,255,255,0.35) 100%);
+    pointer-events:none;
+    z-index:-1;
+  }
+  .glass::after{
+    content:"";
+    position:absolute; top:0; left:8%; right:8%; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+    pointer-events:none;
+    z-index:-1;
+  }
+
+  header{
+    position:absolute; top:16px; left:16px; right:16px; z-index:50;
+    display:flex; align-items:center; gap:12px;
+    background:none; border:none; box-shadow:none;
+  }
+  .title-pill{
+    padding:9px 22px; border-radius:20px;
+    display:flex; align-items:center;
+    flex-shrink:1; min-width:0;
+  }
+  .title-text{ min-width:0; }
+  header h1{
+    font-size:16px; font-weight:700; margin:0; letter-spacing:.02em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    line-height:1.25;
+  }
+  .title-sub{
+    font-size:10px; color:#666; letter-spacing:.08em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .controls{ display:flex; margin-left:auto; align-items:center; flex-shrink:0; }
+
+  .search-pill{
+    border-radius:999px;
+    display:flex; align-items:center;
+    height:44px; width:44px;
+    overflow:hidden;
+    transition:width .28s cubic-bezier(.4,0,.2,1);
+    flex-shrink:0;
+  }
+  .search-pill.expanded{ width:230px; }
+  .search-toggle{
+    width:44px; height:44px; flex-shrink:0;
+    border:none; background:transparent; cursor:pointer; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    color:#111; padding:0;
+  }
+  .search-toggle:hover{ background:rgba(255,255,255,0.4); }
+
+  input[type=text]{
+    background:transparent; border:none; color:#111;
+    padding:0 16px 0 0; font-size:13px; width:0; opacity:0;
+    font-family:'Noto Sans JP',sans-serif; outline:none;
+    transition:opacity .2s ease .05s;
+  }
+  .search-pill.expanded input[type=text]{ width:170px; opacity:1; }
+  input[type=text]::placeholder{ color:#666; }
+
+  button.ctrl{
+    color:#111;
+    cursor:pointer;
+    font-family:'Noto Sans JP',sans-serif; border:none;
+  }
+  button.ctrl:not(.glass){ background:transparent; }
+  button.ctrl:hover{ background:rgba(255,255,255,0.4); }
+
+  .toolbar{
+    position:absolute; bottom:20px; left:16px; z-index:50;
+    display:flex; align-items:center; gap:10px;
+    background:none; border:none; box-shadow:none;
+  }
+  .toolbar .glass{ border-radius:999px; }
+
+  .round-btn{
+    width:44px; height:44px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0;
+  }
+  .round-btn .material-icons{ font-size:20px; }
+
+  .zoom-group{ display:flex; align-items:center; gap:2px; border-radius:999px; padding:4px; }
+  button.icon-btn{ padding:6px; border:none; background:transparent; border-radius:999px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; }
+  button.icon-btn .material-icons{ font-size:17px; }
+  button.icon-btn:hover{ background:rgba(255,255,255,0.5); }
+
+  .canvas-wrap{
+    position:absolute; inset:0; overflow:hidden; cursor:grab; background:#fff;
+    touch-action:none;
+  }
+  .canvas-wrap.grabbing{ cursor:grabbing; }
+  .canvas{ position:absolute; top:0; left:0; transform-origin:0 0; }
+
+  svg.links{ position:absolute; top:0; left:0; pointer-events:none; overflow:visible; }
+  .link-path{ fill:none; stroke:var(--line-red); stroke-linecap:round; }
+
+  .node{
+    position:absolute;
+    transform:translate(0,-50%);
+    white-space:nowrap;
+  }
+  .node-card{
+    background:#fff;
+    border:1.5px solid #111;
+    border-radius:999px;
+    padding:4.5px 14px 4.5px 18px;
+    cursor:pointer;
+    user-select:none;
+    display:flex; align-items:center; gap:6px;
+  }
+  .node-card:hover{ background:#f5f5f5; }
+  .node-card.match{ border-color:var(--line-red); color:var(--line-red); }
+  .node-card.match .material-icons{ color:var(--line-red); }
+
+  .node-jp{ font-size:14px; font-weight:500; }
+  .depth-0 .node-card{ padding:5px 16px 5px 20px; border-width:2px; }
+  .depth-0 .node-jp{ font-size:15px; font-weight:700; }
+
+  .material-icons{
+    font-size:18px; color:#111; line-height:1;
+  }
+  .icon-slot{ width:18px; display:flex; align-items:center; justify-content:center; }
+  .icon-slot.leaf{ visibility:hidden; }
+
+  .modal-overlay{
+    position:fixed; inset:0; 
+    
+    display:none; align-items:center; justify-content:center; z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    border-radius:24px;
+    padding:30px 28px; max-width:480px; width:100%; position:relative;
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    border-radius:999px; color:#111;
+  }
+  .modal-close:hover{ background:rgba(255,255,255,0.45); }
+  .modal-title{ font-size:22px; font-weight:700; }
+  .modal-path{ font-size:14px; line-height:2; margin-top:18px; word-break:break-word; }
+  .modal-path .sep{ color:var(--line-red); font-weight:700; padding:0 2px; }
+
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:#fff; }
+  ::-webkit-scrollbar-thumb{ background:#ccc; border-radius:5px; }
+  ::-webkit-scrollbar-thumb:hover{ background:#999; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="glass title-pill">
+      <div class="title-text">
+        <h1>全身動脈アトラス</h1>
+        <div class="title-sub">Systemic Arterial Atlas</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="glass search-pill" id="searchPill">
+        <button class="search-toggle" id="searchToggle" type="button"><span class="material-icons">search</span></button>
+        <input id="search" type="text" placeholder="検索">
+      </div>
+    </div>
+  </header>
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas" id="canvas">
+      <svg class="links" id="links"></svg>
+      <div id="nodes"></div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="ctrl glass round-btn" id="expandAll" title="全て展開"><span class="material-icons">unfold_more</span></button>
+    <button class="ctrl glass round-btn" id="collapseAll" title="全て閉じる"><span class="material-icons">unfold_less</span></button>
+    <span class="zoom-group glass">
+      <button class="ctrl icon-btn" id="zoomOut"><span class="material-icons">remove</span></button>
+      <button class="ctrl icon-btn" id="zoomIn"><span class="material-icons">add</span></button>
+    </span>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box glass">
+    <button class="modal-close" id="modalClose">
+      <span class="material-icons">close</span>
+    </button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-path" id="modalPath"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- データ：全身動脈の分岐ツリー ---------------- */
+const TREE = {
+  jp:"大動脈", children:[
+    { jp:"上行大動脈", children:[
+      { jp:"右冠状動脈", children:[
+        { jp:"後下行枝" },
+        { jp:"洞房結節枝" }
+      ]},
+      { jp:"左冠状動脈", children:[
+        { jp:"前下行枝(LAD)" },
+        { jp:"回旋枝(Cx)" }
+      ]}
+    ]},
+    { jp:"大動脈弓", children:[
+      { jp:"腕頭動脈", children:[
+        { jp:"右総頸動脈", ref:"CCA" },
+        { jp:"右鎖骨下動脈", ref:"SUBCLAVIAN" }
+      ]},
+      { jp:"左総頸動脈", ref:"CCA" },
+      { jp:"左鎖骨下動脈", ref:"SUBCLAVIAN" }
+    ]},
+    { jp:"胸大動脈", children:[
+      { jp:"気管支動脈" },
+      { jp:"食道動脈" },
+      { jp:"後肋間動脈" },
+      { jp:"上横隔動脈" }
+    ]},
+    { jp:"腹大動脈", children:[
+      { jp:"下横隔動脈" },
+      { jp:"腹腔動脈", children:[
+        { jp:"左胃動脈" },
+        { jp:"脾動脈", children:[
+          { jp:"膵枝" },
+          { jp:"左胃大網動脈" },
+          { jp:"短胃動脈" }
+        ]},
+        { jp:"総肝動脈", children:[
+          { jp:"固有肝動脈", children:[
+            { jp:"右肝動脈" },
+            { jp:"左肝動脈" }
+          ]},
+          { jp:"胃十二指腸動脈", children:[
+            { jp:"右胃大網動脈" },
+            { jp:"上膵十二指腸動脈" }
+          ]},
+          { jp:"右胃動脈" }
+        ]}
+      ]},
+      { jp:"上腸間膜動脈", children:[
+        { jp:"下膵十二指腸動脈" },
+        { jp:"空腸動脈・回腸動脈" },
+        { jp:"回結腸動脈" },
+        { jp:"右結腸動脈" },
+        { jp:"中結腸動脈" }
+      ]},
+      { jp:"腎動脈", children:[
+        { jp:"副腎下動脈" },
+        { jp:"区域動脈" }
+      ]},
+      { jp:"中副腎動脈" },
+      { jp:"精巣(卵巣)動脈" },
+      { jp:"下腸間膜動脈", children:[
+        { jp:"左結腸動脈" },
+        { jp:"S状結腸動脈" },
+        { jp:"上直腸動脈" }
+      ]},
+      { jp:"腰動脈" },
+      { jp:"正中仙骨動脈" },
+      { jp:"総腸骨動脈", children:[
+        { jp:"内腸骨動脈", children:[
+          { jp:"腸腰動脈" },
+          { jp:"外側仙骨動脈" },
+          { jp:"上殿動脈" },
+          { jp:"下殿動脈" },
+          { jp:"臍動脈(索)" },
+          { jp:"膀胱下動脈" },
+          { jp:"子宮動脈／精管動脈" },
+          { jp:"中直腸動脈" },
+          { jp:"内陰部動脈", children:[
+            { jp:"下直腸動脈" },
+            { jp:"陰茎(核)動脈" }
+          ]},
+          { jp:"閉鎖動脈" }
+        ]},
+        { jp:"外腸骨動脈", children:[
+          { jp:"下腹壁動脈" },
+          { jp:"深腸骨回旋動脈" },
+          { jp:"大腿動脈", children:[
+            { jp:"浅腸骨回旋動脈" },
+            { jp:"外陰部動脈" },
+            { jp:"大腿深動脈", children:[
+              { jp:"内側大腿回旋動脈" },
+              { jp:"外側大腿回旋動脈" },
+              { jp:"貫通動脈" }
+            ]},
+            { jp:"下行膝動脈" },
+            { jp:"膝窩動脈", children:[
+              { jp:"膝関節動脈(上・中・下)" },
+              { jp:"前脛骨動脈", children:[
+                { jp:"足背動脈", children:[
+                  { jp:"足背動脈弓" },
+                  { jp:"第1背側中足動脈" }
+                ]}
+              ]},
+              { jp:"後脛骨動脈", children:[
+                { jp:"腓骨動脈" },
+                { jp:"内側足底動脈" },
+                { jp:"外側足底動脈", children:[
+                  { jp:"足底動脈弓" }
+                ]}
+              ]}
+            ]}
+          ]}
+        ]}
+      ]}
+    ]}
+  ]
+};
+
+// 総頸動脈（共通の分岐構造）
+const CCA = { jp:"総頸動脈", children:[
+  { jp:"内頸動脈", children:[
+    { jp:"頸動脈洞・頸動脈小体" },
+    { jp:"眼動脈", children:[
+      { jp:"網膜中心動脈" },
+      { jp:"涙腺動脈" },
+      { jp:"篩骨動脈(前・後)" },
+      { jp:"眼窩上動脈" },
+      { jp:"滑車上動脈" }
+    ]},
+    { jp:"前大脳動脈", children:[
+      { jp:"前交通動脈" }
+    ]},
+    { jp:"中大脳動脈" },
+    { jp:"後交通動脈" },
+    { jp:"脈絡叢前動脈" }
+  ]},
+  { jp:"外頸動脈", children:[
+    { jp:"上甲状腺動脈" },
+    { jp:"上行咽頭動脈" },
+    { jp:"舌動脈" },
+    { jp:"顔面動脈", children:[
+      { jp:"オトガイ下動脈" },
+      { jp:"上唇動脈・下唇動脈" },
+      { jp:"内眼角動脈" }
+    ]},
+    { jp:"後頭動脈" },
+    { jp:"後耳介動脈" },
+    { jp:"浅側頭動脈", children:[
+      { jp:"顔面横動脈" },
+      { jp:"前頭枝・頭頂枝" }
+    ]},
+    { jp:"顎動脈(上顎動脈)", children:[
+      { jp:"下歯槽動脈" },
+      { jp:"中硬膜動脈" },
+      { jp:"眼窩下動脈" },
+      { jp:"蝶口蓋動脈" },
+      { jp:"下行口蓋動脈" }
+    ]}
+  ]}
+]};
+
+// 鎖骨下動脈（共通の分岐構造）
+const SUBCLAVIAN = { jp:"鎖骨下動脈", children:[
+  { jp:"椎骨動脈", children:[
+    { jp:"脳底動脈", children:[
+      { jp:"後大脳動脈" },
+      { jp:"上小脳動脈" },
+      { jp:"前下小脳動脈" },
+      { jp:"迷路動脈(内耳動脈)" }
+    ]},
+    { jp:"後下小脳動脈" },
+    { jp:"脊髄前動脈" }
+  ]},
+  { jp:"内胸動脈", children:[
+    { jp:"心膜横隔動脈" },
+    { jp:"前肋間動脈" },
+    { jp:"上腹壁動脈" },
+    { jp:"筋横隔動脈" }
+  ]},
+  { jp:"甲状頸動脈", children:[
+    { jp:"下甲状腺動脈" },
+    { jp:"頸横動脈" },
+    { jp:"肩甲上動脈" }
+  ]},
+  { jp:"肋頸動脈", children:[
+    { jp:"最上肋間動脈" },
+    { jp:"深頸動脈" }
+  ]},
+  { jp:"肩甲背動脈" },
+  { jp:"腋窩動脈", children:[
+    { jp:"最上胸動脈" },
+    { jp:"胸肩峰動脈" },
+    { jp:"外側胸動脈" },
+    { jp:"肩甲下動脈", children:[
+      { jp:"肩甲回旋動脈" },
+      { jp:"胸背動脈" }
+    ]},
+    { jp:"前上腕回旋動脈" },
+    { jp:"後上腕回旋動脈" },
+    { jp:"上腕動脈", children:[
+      { jp:"深上腕動脈" },
+      { jp:"尺側側副動脈(上)" },
+      { jp:"尺側側副動脈(下)" },
+      { jp:"橈骨動脈", children:[
+        { jp:"橈骨反回動脈" },
+        { jp:"浅掌動脈弓" },
+        { jp:"母指主動脈" },
+        { jp:"背側手根網" }
+      ]},
+      { jp:"尺骨動脈", children:[
+        { jp:"尺骨反回動脈" },
+        { jp:"総骨間動脈", children:[
+          { jp:"前骨間動脈" },
+          { jp:"後骨間動脈" }
+        ]},
+        { jp:"深掌動脈弓" },
+        { jp:"総掌側指動脈" }
+      ]}
+    ]}
+  ]}
+]};
+
+// ref を実体に展開（共有オブジェクトだとバグるため、必ずディープコピーする）
+function deepClone(node){
+  const copy = { jp: node.jp };
+  if(node.children) copy.children = node.children.map(deepClone);
+  return copy;
+}
+function resolveRefs(node){
+  if(node.ref === "CCA"){
+    node.children = CCA.children.map(deepClone);
+    delete node.ref;
+  } else if(node.ref === "SUBCLAVIAN"){
+    node.children = SUBCLAVIAN.children.map(deepClone);
+    delete node.ref;
+  }
+  if(node.children){ node.children.forEach(resolveRefs); }
+}
+resolveRefs(TREE);
+
+/* ---------------- 状態とレイアウト ---------------- */
+let uid = 0;
+function tagIds(node, depth){
+  node._id = "n"+(uid++);
+  node._depth = depth;
+  node._expanded = depth < 1; // ルートのみ初期展開
+  if(node.children) node.children.forEach(c => tagIds(c, depth+1));
+}
+tagIds(TREE, 0);
+
+const ROW_H = 46;
+const COL_W = 230;
+const START_X = 30;
+const START_Y = 110;
+const BOTTOM_PAD = 90;
+
+const nodesEl = document.getElementById('nodes');
+const linksEl = document.getElementById('links');
+const canvas = document.getElementById('canvas');
+const wrap = document.getElementById('canvasWrap');
+let zoom = 1;
+let panX = 0, panY = 0;
+function applyTransform(){
+  canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+}
+
+function widthForDepth(d){
+  return Math.max(5 - d*0.7, 1.2);
+}
+
+// 90度で分岐し、角だけ丸めたコネクタパスを作る
+function elbowPath(x1, y1, x2, y2, midX, r){
+  if(Math.abs(y2-y1) < 0.5){
+    return `M${x1},${y1} L${x2},${y2}`;
+  }
+  const dir = y2 > y1 ? 1 : -1;
+  const rr = Math.max(0, Math.min(r, midX-x1, x2-midX, Math.abs(y2-y1)/2));
+  return `M${x1},${y1}
+    L${midX-rr},${y1}
+    Q${midX},${y1} ${midX},${y1+dir*rr}
+    L${midX},${y2-dir*rr}
+    Q${midX},${y2} ${midX+rr},${y2}
+    L${x2},${y2}`;
+}
+
+let leafCounter = 0;
+function layout(node){
+  leafCounter = 0;
+  const positioned = [];
+  function walk(n, depth){
+    let y;
+    if(!n._expanded || !n.children || n.children.length===0){
+      y = START_Y + leafCounter*ROW_H;
+      leafCounter++;
+    } else {
+      const ys = n.children.map(c => walk(c, depth+1));
+      y = (ys[0]+ys[ys.length-1])/2;
+    }
+    const x = START_X + depth*COL_W;
+    positioned.push({node:n, x, y, depth});
+    return y;
+  }
+  walk(node, 0);
+  return positioned;
+}
+
+let searchTerm = "";
+
+function render(){
+  const positions = layout(TREE);
+  const map = {};
+  positions.forEach(p => map[p.node._id] = p);
+
+  const maxX = Math.max(...positions.map(p=>p.x)) + COL_W;
+  const maxY = Math.max(...positions.map(p=>p.y)) + ROW_H + BOTTOM_PAD;
+  canvas.style.width = maxX + "px";
+  canvas.style.height = maxY + "px";
+  applyTransform();
+  linksEl.setAttribute('width', maxX);
+  linksEl.setAttribute('height', maxY);
+  linksEl.style.width = maxX+"px";
+  linksEl.style.height = maxY+"px";
+
+  // nodes
+  let html = "";
+  const term = searchTerm.trim();
+  positions.forEach(p => {
+    const n = p.node;
+    const hasChildren = n.children && n.children.length>0;
+    const isMatch = term.length>0 && n.jp.includes(term);
+    const icon = hasChildren ? (n._expanded ? 'remove' : 'add') : '';
+    html += `<div class="node depth-${p.depth}" style="left:${p.x}px; top:${p.y}px;">
+      <div class="node-card ${isMatch?'match':''}" data-id="${n._id}">
+        <span class="node-jp">${n.jp}</span>
+        <span class="icon-slot ${hasChildren?'':'leaf'}" data-id="${n._id}"><span class="material-icons">${icon}</span></span>
+      </div>
+    </div>`;
+  });
+  nodesEl.innerHTML = html;
+  nodesEl.style.position = "relative";
+
+  // 実際に描画されたカード幅を計測してから線を引く（隙間なく接続するため）
+  const widthById = {};
+  nodesEl.querySelectorAll('.node-card').forEach(el => {
+    widthById[el.dataset.id] = el.offsetWidth;
+  });
+  let linkSvg = "";
+  positions.forEach(p => {
+    if(p.node._expanded && p.node.children){
+      const x1 = p.x + (widthById[p.node._id] || 0);
+      const y1 = p.y;
+      p.node.children.forEach(c => {
+        const cp = map[c._id];
+        if(!cp) return;
+        const x2 = cp.x, y2 = cp.y;
+        const midX = (x1+x2)/2;
+        const w = widthForDepth(cp.depth);
+        const d = elbowPath(x1, y1, x2, y2, midX, 10);
+        linkSvg += `<path class="link-path" d="${d}" stroke-width="${w}"/>`;
+      });
+    }
+  });
+  linksEl.innerHTML = linkSvg;
+
+  // bind events
+  nodesEl.querySelectorAll('.node-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      const found = findById(TREE, id);
+      if(found) openModal(found);
+    });
+  });
+  nodesEl.querySelectorAll('.icon-slot:not(.leaf)').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = el.dataset.id;
+      const found = findById(TREE, id);
+      if(found && found.children && found.children.length){
+        found._expanded = !found._expanded;
+        render();
+      }
+    });
+  });
+}
+
+function findById(node, id){
+  if(node._id===id) return node;
+  if(node.children){
+    for(const c of node.children){
+      const r = findById(c, id);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+
+function findPath(node, id, path){
+  path.push(node);
+  if(node._id===id) return true;
+  if(node.children){
+    for(const c of node.children){
+      if(findPath(c, id, path)) return true;
+    }
+  }
+  path.pop();
+  return false;
+}
+
+const modalOverlay = document.getElementById('modalOverlay');
+const modalTitle = document.getElementById('modalTitle');
+const modalPath = document.getElementById('modalPath');
+
+function openModal(node){
+  const path = [];
+  findPath(TREE, node._id, path);
+  modalTitle.textContent = node.jp;
+  modalPath.innerHTML = path.map(n => n.jp).join('<span class="sep"> ー </span>');
+  modalOverlay.classList.add('open');
+}
+function closeModal(){
+  modalOverlay.classList.remove('open');
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => {
+  if(e.target === modalOverlay) closeModal();
+});
+
+function expandAll(node, v){
+  if(node.children && node.children.length){
+    node._expanded = v;
+    node.children.forEach(c => expandAll(c, v));
+  }
+}
+
+function expandPathTo(node, term, path){
+  path.push(node);
+  const match = node.jp.includes(term);
+  let found = match;
+  if(node.children){
+    for(const c of node.children){
+      if(expandPathTo(c, term, path)) found = true;
+    }
+  }
+  if(found && node.children && node.children.length){ node._expanded = true; }
+  if(!found) path.pop();
+  return found;
+}
+
+document.getElementById('expandAll').addEventListener('click', () => {
+  expandAll(TREE, true);
+  render();
+});
+document.getElementById('collapseAll').addEventListener('click', () => {
+  expandAll(TREE, false);
+  TREE._expanded = true;
+  render();
+});
+
+const searchInput = document.getElementById('search');
+function panToElement(el){
+  const wrapRect = wrap.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  panX += (wrapRect.left + wrapRect.width/2) - (elRect.left + elRect.width/2);
+  panY += (wrapRect.top + wrapRect.height/2) - (elRect.top + elRect.height/2);
+  canvas.style.transition = 'transform .35s ease';
+  applyTransform();
+  setTimeout(() => { canvas.style.transition = ''; }, 360);
+}
+searchInput.addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  if(searchTerm.trim().length>0){
+    expandPathTo(TREE, searchTerm.trim(), []);
+  }
+  render();
+  if(searchTerm.trim().length>0){
+    const matchEl = nodesEl.querySelector('.match');
+    if(matchEl) panToElement(matchEl);
+  }
+});
+
+// 検索：丸いアイコンボタンをタップすると伸びて入力欄が出る
+const searchPill = document.getElementById('searchPill');
+const searchToggle = document.getElementById('searchToggle');
+searchToggle.addEventListener('click', () => {
+  if(searchPill.classList.contains('expanded')){
+    searchPill.classList.remove('expanded');
+    searchInput.value = '';
+    searchTerm = '';
+    render();
+  } else {
+    searchPill.classList.add('expanded');
+    setTimeout(() => searchInput.focus(), 220);
+  }
+});
+searchInput.addEventListener('blur', () => {
+  if(searchInput.value.trim().length === 0){
+    searchPill.classList.remove('expanded');
+  }
+});
+
+function clampZoom(z){ return Math.min(2.5, Math.max(0.3, z)); }
+
+// 指定したスクリーン座標を中心にズームする（Googleマップのような挙動）。
+// レイアウトの再計算はせず、transformの更新だけで済ませる（軽量・無制限）
+function zoomAt(newZoom, clientX, clientY){
+  newZoom = clampZoom(newZoom);
+  const rect = wrap.getBoundingClientRect();
+  const localX = clientX - rect.left;
+  const localY = clientY - rect.top;
+  const contentX = (localX - panX) / zoom;
+  const contentY = (localY - panY) / zoom;
+  zoom = newZoom;
+  panX = localX - contentX*zoom;
+  panY = localY - contentY*zoom;
+  applyTransform();
+}
+
+function setZoom(z){
+  const rect = wrap.getBoundingClientRect();
+  zoomAt(z, rect.left + rect.width/2, rect.top + rect.height/2);
+}
+
+document.getElementById('zoomIn').addEventListener('click', () => setZoom(zoom + 0.2));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(zoom - 0.2));
+
+// マウスホイール／トラックパッドで、カーソル位置を中心に拡大縮小
+wrap.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  zoomAt(zoom - e.deltaY * 0.012, e.clientX, e.clientY);
+}, { passive:false });
+
+// マウスドラッグで上下左右に際限なくパン
+let isDown=false, startX, startY, panStartXm, panStartYm;
+wrap.addEventListener('mousedown', (e)=>{
+  if(e.target.closest('.node-card') || e.target.closest('input') || e.target.closest('button')) return;
+  isDown=true; wrap.classList.add('grabbing');
+  startX = e.pageX; startY = e.pageY;
+  panStartXm = panX; panStartYm = panY;
+});
+window.addEventListener('mouseup', ()=>{ isDown=false; wrap.classList.remove('grabbing'); });
+window.addEventListener('mousemove', (e)=>{
+  if(!isDown) return;
+  e.preventDefault();
+  panX = panStartXm + (e.pageX - startX);
+  panY = panStartYm + (e.pageY - startY);
+  applyTransform();
+});
+
+// タッチ：1本指でパン、2本指でピンチズーム（Googleマップ相当の操作感、上下左右に無制限）
+function touchDist(t1, t2){ return Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY); }
+function touchMid(t1, t2){ return { x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2 }; }
+
+let touchMode = null; // 'pan' | 'pinch'
+let panStartX=0, panStartY=0, panOrigX=0, panOrigY=0;
+let pinchStartDist=0, pinchStartZoom=1;
+
+wrap.addEventListener('touchstart', (e) => {
+  if(e.target.closest('.node-card') || e.target.closest('input') || e.target.closest('button')) return;
+  if(e.touches.length === 1){
+    touchMode = 'pan';
+    panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+    panOrigX = panX; panOrigY = panY;
+  } else if(e.touches.length === 2){
+    touchMode = 'pinch';
+    pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+    pinchStartZoom = zoom;
+  }
+}, { passive:false });
+
+wrap.addEventListener('touchmove', (e) => {
+  if(touchMode === 'pan' && e.touches.length === 1){
+    e.preventDefault();
+    panX = panOrigX + (e.touches[0].clientX - panStartX);
+    panY = panOrigY + (e.touches[0].clientY - panStartY);
+    applyTransform();
+  } else if(touchMode === 'pinch' && e.touches.length === 2){
+    e.preventDefault();
+    const dist = touchDist(e.touches[0], e.touches[1]);
+    const mid = touchMid(e.touches[0], e.touches[1]);
+    const newZoom = pinchStartZoom * (dist / pinchStartDist);
+    zoomAt(newZoom, mid.x, mid.y);
+  }
+}, { passive:false });
+
+wrap.addEventListener('touchend', (e) => {
+  if(e.touches.length === 0) touchMode = null;
+  else if(e.touches.length === 1){
+    touchMode = 'pan';
+    panStartX = e.touches[0].clientX; panStartY = e.touches[0].clientY;
+    panOrigX = panX; panOrigY = panY;
+  }
+});
+
+render();
+</script>
+</body>
+</html>
