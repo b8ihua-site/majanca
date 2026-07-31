@@ -61,7 +61,7 @@
 
   header{
     position:absolute;
-    top: max(16px, calc(env(safe-area-inset-top) + 12px));
+    top: max(12px, env(safe-area-inset-top));
     left: max(16px, calc(env(safe-area-inset-left) + 16px));
     right: max(16px, calc(env(safe-area-inset-right) + 16px));
     z-index:50;
@@ -108,7 +108,7 @@
 
   input[type=text]{
     background:transparent; border:none; color:#111;
-    padding:0 16px 0 0; font-size:13px; width:0; opacity:0;
+    padding:0 16px 0 0; font-size:16px; width:0; opacity:0;
     font-family:'Noto Sans JP',sans-serif; outline:none;
     transition:opacity .2s ease .05s;
   }
