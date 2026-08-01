@@ -139,7 +139,7 @@
 
   .toolbar{
     position:absolute;
-    bottom: max(20px, calc(env(safe-area-inset-bottom) + 14px));
+    bottom: max(12px, env(safe-area-inset-bottom));
     left: max(16px, calc(env(safe-area-inset-left) + 16px));
     z-index:50;
     display:flex; align-items:center; gap:10px;
@@ -248,7 +248,7 @@
     <div class="controls">
       <div class="glass search-pill" id="searchPill">
         <button class="search-toggle" id="searchToggle" type="button"><span class="material-icons">search</span></button>
-        <input id="search" type="text" placeholder="動脈名で検索">
+        <input id="search" type="text" placeholder="名称で検索">
       </div>
       <div class="search-results glass" id="searchResults"></div>
     </div>
