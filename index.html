@@ -1756,6 +1756,10 @@ body.dark-mode .mask { background: #2a2e36; }
   opacity: 0.5;
 }
 
+/* 複数選択で選んだ選択肢（解答前） */
+.choice-item.picked { border-color: var(--accent); }
+.choice-item.picked .choice-label { background: var(--accent); color:#fff; }
+
 
 
 /* 正解を選んだ場合：枠線と記号のみ緑、背景は白のまま */
@@ -4645,8 +4649,10 @@ let maskClickHandler = null;
 ===================================================================== */
 function buildChoiceListHTML(q, existingGrade) {
   const answered = false;
+  const multi = (q.answer || '').includes(',');
+  const needCount = multi ? q.answer.split(',').length : 1;
   return `
-    <div class="choice-list ${answered ? 'answered' : ''}" id="choice-list">
+    <div class="choice-list ${answered ? 'answered' : ''}" id="choice-list" data-multi="${multi}">
       ${q.choices.map(c => {
         const revealedCorrect = answered && c.correct;
         const itemCls = revealedCorrect ? 'expanded correct-choice' : (answered ? 'expanded' : '');
@@ -4665,47 +4671,90 @@ function buildChoiceListHTML(q, existingGrade) {
         </div>`;
       }).join('')}
     </div>
-    ${!answered ? `
+    ${multi ? `
+    <button type="button" class="btn-cta" id="multi-submit-btn" style="margin-top:16px;" disabled>解答する</button>
+    <div class="tap-hint">
+      <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
+      ${needCount}つ選択して「解答する」をタップ · 右のアイコンで除外
+    </div>` : `
     <div class="tap-hint">
       <span class="material-symbols-outlined" style="font-size:14px;">touch_app</span>
       選択肢をタップして解答 · 右のアイコンで除外
-    </div>` : ''}
+    </div>`}
   `;
 }
 
 function initChoiceInteraction(subj, qidStr, existingGrade) {
   const list = $('#choice-list');
   if (!list) return;
+  const multi = list.dataset.multi === 'true';
+
+  if (!multi) {
+    // 単一選択（従来通り、タップで即解答）
+    list.querySelectorAll('.choice-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (list.classList.contains('answered')) return;
+        list.classList.add('answered');
+
+        const clickedCorrect = btn.dataset.correct === 'true';
+        const item = btn.closest('.choice-item');
+        item.classList.add(clickedCorrect ? 'selected-correct' : 'selected-wrong');
+
+        list.querySelectorAll('.choice-item').forEach(it => {
+          const b = it.querySelector('.choice-btn');
+          const isCorrect = b.dataset.correct === 'true';
+          const label = b.querySelector('.choice-label');
+          label.innerHTML = isCorrect
+            ? '<span class="material-symbols-outlined">circle</span>'
+            : '<span class="material-symbols-outlined">close</span>';
+          if (isCorrect && !clickedCorrect) it.classList.add('correct-choice');
+          it.classList.add('expanded');
+          b.disabled = true;
+        });
+
+        // 除外ボタンも解答後は無効化
+        list.querySelectorAll('.eliminate-btn').forEach(eb => eb.disabled = true);
+
+        setGrade(subj.id, qidStr, clickedCorrect ? 2 : 0);
+
+        $('#exp-toggle')?.classList.add('open');
+        $('#exp-body')?.classList.add('open');
+      });
+    });
+
+    // 除外ボタン
+    list.querySelectorAll('.eliminate-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (list.classList.contains('answered')) return;
+        const item = btn.closest('.choice-item');
+        const now = item.classList.toggle('eliminated');
+        btn.classList.toggle('active', now);
+      });
+    });
+    return;
+  }
+
+  // 複数選択（「2つ選べ」等）：選んでから「解答する」で確定
+  const picked = new Set();
+  const submitBtn = $('#multi-submit-btn');
 
   list.querySelectorAll('.choice-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       if (list.classList.contains('answered')) return;
-      list.classList.add('answered');
-
-      const clickedCorrect = btn.dataset.correct === 'true';
+      const label = btn.dataset.label;
       const item = btn.closest('.choice-item');
-      item.classList.add(clickedCorrect ? 'selected-correct' : 'selected-wrong');
-
-      list.querySelectorAll('.choice-item').forEach(it => {
-        const b = it.querySelector('.choice-btn');
-        const isCorrect = b.dataset.correct === 'true';
-        const label = b.querySelector('.choice-label');
-        label.innerHTML = isCorrect
-          ? '<span class="material-symbols-outlined">circle</span>'
-          : '<span class="material-symbols-outlined">close</span>';
-        if (isCorrect && !clickedCorrect) it.classList.add('correct-choice');
-        it.classList.add('expanded');
-        b.disabled = true;
-      });
-
-      // 除外ボタンも解答後は無効化
-      list.querySelectorAll('.eliminate-btn').forEach(eb => eb.disabled = true);
-
-      setGrade(subj.id, qidStr, clickedCorrect ? 2 : 0);
-
-      $('#exp-toggle')?.classList.add('open');
-      $('#exp-body')?.classList.add('open');
+      if (item.classList.contains('eliminated')) return;
+      if (picked.has(label)) {
+        picked.delete(label);
+        item.classList.remove('picked');
+      } else {
+        picked.add(label);
+        item.classList.add('picked');
+      }
+      if (submitBtn) submitBtn.disabled = picked.size === 0;
     });
   });
 
@@ -4719,6 +4768,46 @@ function initChoiceInteraction(subj, qidStr, existingGrade) {
       btn.classList.toggle('active', now);
     });
   });
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (list.classList.contains('answered')) return;
+      list.classList.add('answered');
+
+      let allCorrect = true;
+      list.querySelectorAll('.choice-item').forEach(it => {
+        const b = it.querySelector('.choice-btn');
+        const label = b.dataset.label;
+        const isCorrect = b.dataset.correct === 'true';
+        const wasPicked = picked.has(label);
+        const labelEl = b.querySelector('.choice-label');
+
+        if (isCorrect) {
+          labelEl.innerHTML = '<span class="material-symbols-outlined">circle</span>';
+        } else if (wasPicked) {
+          labelEl.innerHTML = '<span class="material-symbols-outlined">close</span>';
+        } else {
+          labelEl.textContent = label;
+        }
+
+        if (wasPicked && isCorrect) it.classList.add('selected-correct');
+        else if (wasPicked && !isCorrect) { it.classList.add('selected-wrong'); allCorrect = false; }
+        else if (!wasPicked && isCorrect) { it.classList.add('correct-choice'); allCorrect = false; }
+
+        it.classList.add('expanded');
+        b.disabled = true;
+      });
+
+      list.querySelectorAll('.eliminate-btn').forEach(eb => eb.disabled = true);
+      submitBtn.disabled = true;
+      submitBtn.textContent = allCorrect ? '正解！' : '不正解';
+
+      setGrade(subj.id, qidStr, allCorrect ? 2 : 0);
+      $('#exp-toggle')?.classList.add('open');
+      $('#exp-body')?.classList.add('open');
+    });
+  }
 }
 
 function initMaskReveal() {
@@ -5493,6 +5582,10 @@ function initShortcuts() {
       const label = e.key.toUpperCase();
       const btn = document.querySelector(`#choice-list .choice-btn[data-label="${label}"]`);
       if (btn && !btn.disabled) btn.click();
+    }
+    else if (choiceMode && e.key === 'Enter') {
+      e.preventDefault();
+      $('#multi-submit-btn')?.click();
     }
     else if (!choiceMode && e.key.toLowerCase() === 'e') $('#exp-toggle')?.click();
     else if (['1','2','3','4'].includes(e.key)) $$('#assess-row .assess-btn')[Number(e.key)-1]?.click();
