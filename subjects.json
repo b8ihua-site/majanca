@@ -6,7 +6,7 @@
       "subjects": [
         { "id": "RE",  "name": "呼吸器病学",   "subname": "Respiratory Medicine",  "color": "#00869E", "file": "re.json"  },
         { "id": "RA",  "name": "放射線医学（ミス多）",   "subname": "Radiology (beta)",  "color": "#D8D80C", "file": "rd.json" },
-        { "id": "EN",  "name": "内分泌科学",   "subname": "Endocrinology",  "color": "#214AFE", "file": "en.json"  },
+        { "id": "EN",  "name": "内分泌科学",   "subname": "Endocrinology",  "color": "#214AFE", "file": "en2.json"  },
 { "id": "CV",  "name": "循環器内科学",   "subname": "Endocrinology",  "color": "#910026", "file": "ca.json"  }
       ]
     },
