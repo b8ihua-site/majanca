@@ -8,7 +8,8 @@
         { "id": "RA",  "name": "放射線医学（ミス多）",   "subname": "Radiology (beta)",  "color": "#D8D80C", "file": "rd.json" },
         { "id": "EN",  "name": "内分泌科学",   "subname": "Endocrinology",  "color": "#214AFE", "file": "en3.json"  },
 { "id": "CV",  "name": "循環器内科学",   "subname": "Endocrinology",  "color": "#910026", "file": "ca.json"  },
-{ "id": "GA",  "name": "消化器科学",   "subname": "Gastroenterology",  "color": "#FE7600", "file": "ga.json"  }
+{ "id": "GA",  "name": "消化器科学",   "subname": "Gastroenterology",  "color": "#FE7600", "file": "ga.json"  },
+{ "id": "NP",  "name": "腎臓病学",   "subname": "Nephrology",  "color": "#A057D8", "file": "np.json"  }
       ]
     },
     {
