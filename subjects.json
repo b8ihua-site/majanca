@@ -10,7 +10,8 @@
 { "id": "CV",  "name": "循環器内科学",   "subname": "Endocrinology",  "color": "#910026", "file": "ca.json"  },
 { "id": "GA",  "name": "消化器科学",   "subname": "Gastroenterology",  "color": "#FE7600", "file": "ga.json"  },
 { "id": "NP",  "name": "腎臓病学",   "subname": "Nephrology",  "color": "#A057D8", "file": "np.json"  },
-{ "id": "UR",  "name": "泌尿器科学",   "subname": "Urology",  "color": "#39B59E", "file": "ur.json"  }
+{ "id": "UR",  "name": "泌尿器科学",   "subname": "Urology",  "color": "#39B59E", "file": "ur.json"  },
+{ "id": "EM",  "name": "救急医学",   "subname": "Emergency medicine",  "color": "#AF1C48", "file": "em.json"  }
       ]
     },
     {
